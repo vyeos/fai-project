@@ -76,7 +76,7 @@ class Corridor:
         if any(d <= 0 for d in self.link_distances_m):
             raise ValueError("All link distances must be positive")
         positions = [it.position_m for it in self.intersections]
-        if any(b - a <= 0 for a, b in zip(positions, positions[1:], strict=True)):
+        if any(b - a <= 0 for a, b in zip(positions, positions[1:], strict=False)):
             raise ValueError("Intersection positions must strictly increase along the corridor")
 
     @property

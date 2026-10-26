@@ -105,7 +105,7 @@ class AlgorithmResult:
 
 def results_dataframe(results: list[AlgorithmResult] | list[dict[str, object]]) -> pd.DataFrame:
     """Build the comparison table used by the dashboard and experiments."""
-    rows = [r.summary_dict() if isinstance(r, AlgorithmResult) else r for r in results]
+    rows = [r.summary_dict if isinstance(r, AlgorithmResult) else r for r in results]
     frame = pd.DataFrame(rows)
     if "algorithm" in frame.columns:
         order = {"uncoordinated": 0, "greedy": 1, "csp": 2}

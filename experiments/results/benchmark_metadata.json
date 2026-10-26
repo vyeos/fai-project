@@ -1,0 +1,633 @@
+{
+  "project": "Classical AI-Based Traffic Signal Coordination",
+  "version": "1.0.0",
+  "generated_at": "2026-10-26 14:56:34",
+  "note": "Simulation results under documented simplifying assumptions; not field data.",
+  "exhaustive_budget_s": 120.0,
+  "scenarios": {
+    "A": {
+      "scenario": "A",
+      "description": "3 intersections, low demand, 5 s offsets, no progression constraint",
+      "config": {
+        "n_intersections": 3,
+        "cycle_length": 60.0,
+        "green_duration": 30.0,
+        "link_distance_m": 400.0,
+        "link_distances_m": null,
+        "speed_kmh": 40.0,
+        "demand_level": "low",
+        "vehicles_per_direction": 10,
+        "headway_s": 3.0,
+        "departure_pattern": "platoon",
+        "direction_mode": "both",
+        "departure_start_s": 0.0,
+        "jitter_s": 0.0,
+        "seed": 42,
+        "offset_resolution_s": 5.0,
+        "objective_weight_wait": 1.0,
+        "objective_weight_stop": 2.0,
+        "progression_tolerance_s": null
+      },
+      "vehicles_generated": 20,
+      "first_arrivals_forward": [
+        0.0,
+        3.0,
+        6.0,
+        9.0,
+        12.0
+      ],
+      "verification": {
+        "performed": true,
+        "completed": true,
+        "feasible_plans": 144,
+        "plans_considered": 144,
+        "best_objective": 140.0,
+        "csp_matches_brute_force": true
+      },
+      "algorithm_search_times_s": {
+        "uncoordinated": 0.0001,
+        "greedy": 0.0001,
+        "csp": 0.0049
+      }
+    },
+    "B": {
+      "scenario": "B",
+      "description": "5 intersections, medium demand, 5 s offsets, no progression constraint",
+      "config": {
+        "n_intersections": 5,
+        "cycle_length": 60.0,
+        "green_duration": 30.0,
+        "link_distance_m": 400.0,
+        "link_distances_m": null,
+        "speed_kmh": 40.0,
+        "demand_level": "medium",
+        "vehicles_per_direction": 20,
+        "headway_s": 1.0,
+        "departure_pattern": "platoon",
+        "direction_mode": "both",
+        "departure_start_s": 0.0,
+        "jitter_s": 0.0,
+        "seed": 42,
+        "offset_resolution_s": 5.0,
+        "objective_weight_wait": 1.0,
+        "objective_weight_stop": 2.0,
+        "progression_tolerance_s": null
+      },
+      "vehicles_generated": 40,
+      "first_arrivals_forward": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "verification": {
+        "performed": true,
+        "completed": true,
+        "feasible_plans": 20736,
+        "plans_considered": 20736,
+        "best_objective": 618.0,
+        "csp_matches_brute_force": true
+      },
+      "algorithm_search_times_s": {
+        "uncoordinated": 0.0001,
+        "greedy": 0.0001,
+        "csp": 1.4328
+      }
+    },
+    "C": {
+      "scenario": "C",
+      "description": "7 intersections, medium demand, 5 s offsets, 10 s progression tolerance (hard constraint active for tractability)",
+      "config": {
+        "n_intersections": 7,
+        "cycle_length": 60.0,
+        "green_duration": 30.0,
+        "link_distance_m": 400.0,
+        "link_distances_m": null,
+        "speed_kmh": 40.0,
+        "demand_level": "medium",
+        "vehicles_per_direction": 20,
+        "headway_s": 1.0,
+        "departure_pattern": "platoon",
+        "direction_mode": "both",
+        "departure_start_s": 0.0,
+        "jitter_s": 0.0,
+        "seed": 42,
+        "offset_resolution_s": 5.0,
+        "objective_weight_wait": 1.0,
+        "objective_weight_stop": 2.0,
+        "progression_tolerance_s": 10.0
+      },
+      "vehicles_generated": 40,
+      "first_arrivals_forward": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "verification": {
+        "performed": false,
+        "reason": "search space too large for exhaustive verification; skipped honestly",
+        "space_size": 2985984
+      },
+      "algorithm_search_times_s": {
+        "uncoordinated": 0.0001,
+        "greedy": 0.0001,
+        "csp": 0.3524
+      }
+    },
+    "D": {
+      "scenario": "D",
+      "description": "5 intersections, high demand, 5 s offsets, no progression constraint",
+      "config": {
+        "n_intersections": 5,
+        "cycle_length": 60.0,
+        "green_duration": 30.0,
+        "link_distance_m": 400.0,
+        "link_distances_m": null,
+        "speed_kmh": 40.0,
+        "demand_level": "high",
+        "vehicles_per_direction": 50,
+        "headway_s": 1.0,
+        "departure_pattern": "platoon",
+        "direction_mode": "both",
+        "departure_start_s": 0.0,
+        "jitter_s": 0.0,
+        "seed": 42,
+        "offset_resolution_s": 5.0,
+        "objective_weight_wait": 1.0,
+        "objective_weight_stop": 2.0,
+        "progression_tolerance_s": null
+      },
+      "vehicles_generated": 100,
+      "first_arrivals_forward": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "verification": {
+        "performed": true,
+        "completed": true,
+        "feasible_plans": 20736,
+        "plans_considered": 20736,
+        "best_objective": 2078.0,
+        "csp_matches_brute_force": true
+      },
+      "algorithm_search_times_s": {
+        "uncoordinated": 0.0002,
+        "greedy": 0.0002,
+        "csp": 3.3505
+      }
+    },
+    "E": {
+      "scenario": "E",
+      "description": "5 intersections, medium demand, 1 s offsets, 10 s progression tolerance (hard constraint active for tractability)",
+      "config": {
+        "n_intersections": 5,
+        "cycle_length": 60.0,
+        "green_duration": 30.0,
+        "link_distance_m": 400.0,
+        "link_distances_m": null,
+        "speed_kmh": 40.0,
+        "demand_level": "medium",
+        "vehicles_per_direction": 20,
+        "headway_s": 1.0,
+        "departure_pattern": "platoon",
+        "direction_mode": "both",
+        "departure_start_s": 0.0,
+        "jitter_s": 0.0,
+        "seed": 42,
+        "offset_resolution_s": 1.0,
+        "objective_weight_wait": 1.0,
+        "objective_weight_stop": 2.0,
+        "progression_tolerance_s": 10.0
+      },
+      "vehicles_generated": 40,
+      "first_arrivals_forward": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "verification": {
+        "performed": false,
+        "reason": "search space too large for exhaustive verification; skipped honestly",
+        "space_size": 12960000
+      },
+      "algorithm_search_times_s": {
+        "uncoordinated": 0.0001,
+        "greedy": 0.0001,
+        "csp": 12.3977
+      }
+    },
+    "F1": {
+      "scenario": "F1",
+      "description": "Sensitivity: 5 intersections, low demand",
+      "config": {
+        "n_intersections": 5,
+        "cycle_length": 60.0,
+        "green_duration": 30.0,
+        "link_distance_m": 400.0,
+        "link_distances_m": null,
+        "speed_kmh": 40.0,
+        "demand_level": "low",
+        "vehicles_per_direction": 10,
+        "headway_s": 3.0,
+        "departure_pattern": "platoon",
+        "direction_mode": "both",
+        "departure_start_s": 0.0,
+        "jitter_s": 0.0,
+        "seed": 42,
+        "offset_resolution_s": 5.0,
+        "objective_weight_wait": 1.0,
+        "objective_weight_stop": 2.0,
+        "progression_tolerance_s": null
+      },
+      "vehicles_generated": 20,
+      "first_arrivals_forward": [
+        0.0,
+        3.0,
+        6.0,
+        9.0,
+        12.0
+      ],
+      "verification": {
+        "performed": true,
+        "completed": true,
+        "feasible_plans": 20736,
+        "plans_considered": 20736,
+        "best_objective": 308.0,
+        "csp_matches_brute_force": true
+      },
+      "algorithm_search_times_s": {
+        "uncoordinated": 0.0,
+        "greedy": 0.0001,
+        "csp": 0.7597
+      }
+    },
+    "F2": {
+      "scenario": "F2",
+      "description": "Sensitivity: 5 intersections, medium demand",
+      "config": {
+        "n_intersections": 5,
+        "cycle_length": 60.0,
+        "green_duration": 30.0,
+        "link_distance_m": 400.0,
+        "link_distances_m": null,
+        "speed_kmh": 40.0,
+        "demand_level": "medium",
+        "vehicles_per_direction": 20,
+        "headway_s": 1.0,
+        "departure_pattern": "platoon",
+        "direction_mode": "both",
+        "departure_start_s": 0.0,
+        "jitter_s": 0.0,
+        "seed": 42,
+        "offset_resolution_s": 5.0,
+        "objective_weight_wait": 1.0,
+        "objective_weight_stop": 2.0,
+        "progression_tolerance_s": null
+      },
+      "vehicles_generated": 40,
+      "first_arrivals_forward": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "verification": {
+        "performed": true,
+        "completed": true,
+        "feasible_plans": 20736,
+        "plans_considered": 20736,
+        "best_objective": 618.0,
+        "csp_matches_brute_force": true
+      },
+      "algorithm_search_times_s": {
+        "uncoordinated": 0.0001,
+        "greedy": 0.0001,
+        "csp": 1.4463
+      }
+    },
+    "F3": {
+      "scenario": "F3",
+      "description": "Sensitivity: 5 intersections, high demand",
+      "config": {
+        "n_intersections": 5,
+        "cycle_length": 60.0,
+        "green_duration": 30.0,
+        "link_distance_m": 400.0,
+        "link_distances_m": null,
+        "speed_kmh": 40.0,
+        "demand_level": "high",
+        "vehicles_per_direction": 50,
+        "headway_s": 1.0,
+        "departure_pattern": "platoon",
+        "direction_mode": "both",
+        "departure_start_s": 0.0,
+        "jitter_s": 0.0,
+        "seed": 42,
+        "offset_resolution_s": 5.0,
+        "objective_weight_wait": 1.0,
+        "objective_weight_stop": 2.0,
+        "progression_tolerance_s": null
+      },
+      "vehicles_generated": 100,
+      "first_arrivals_forward": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "verification": {
+        "performed": true,
+        "completed": true,
+        "feasible_plans": 20736,
+        "plans_considered": 20736,
+        "best_objective": 2078.0,
+        "csp_matches_brute_force": true
+      },
+      "algorithm_search_times_s": {
+        "uncoordinated": 0.0002,
+        "greedy": 0.0002,
+        "csp": 3.5515
+      }
+    },
+    "G1": {
+      "scenario": "G1",
+      "description": "Sensitivity: 5 intersections, 5 s offsets, 10 s tolerance",
+      "config": {
+        "n_intersections": 5,
+        "cycle_length": 60.0,
+        "green_duration": 30.0,
+        "link_distance_m": 400.0,
+        "link_distances_m": null,
+        "speed_kmh": 40.0,
+        "demand_level": "medium",
+        "vehicles_per_direction": 20,
+        "headway_s": 1.0,
+        "departure_pattern": "platoon",
+        "direction_mode": "both",
+        "departure_start_s": 0.0,
+        "jitter_s": 0.0,
+        "seed": 42,
+        "offset_resolution_s": 5.0,
+        "objective_weight_wait": 1.0,
+        "objective_weight_stop": 2.0,
+        "progression_tolerance_s": 10.0
+      },
+      "vehicles_generated": 40,
+      "first_arrivals_forward": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "verification": {
+        "performed": true,
+        "completed": true,
+        "feasible_plans": 256,
+        "plans_considered": 20736,
+        "best_objective": 618.0,
+        "csp_matches_brute_force": true
+      },
+      "algorithm_search_times_s": {
+        "uncoordinated": 0.0001,
+        "greedy": 0.0001,
+        "csp": 0.0168
+      }
+    },
+    "G2": {
+      "scenario": "G2",
+      "description": "Sensitivity: 5 intersections, 1 s offsets, 10 s tolerance",
+      "config": {
+        "n_intersections": 5,
+        "cycle_length": 60.0,
+        "green_duration": 30.0,
+        "link_distance_m": 400.0,
+        "link_distances_m": null,
+        "speed_kmh": 40.0,
+        "demand_level": "medium",
+        "vehicles_per_direction": 20,
+        "headway_s": 1.0,
+        "departure_pattern": "platoon",
+        "direction_mode": "both",
+        "departure_start_s": 0.0,
+        "jitter_s": 0.0,
+        "seed": 42,
+        "offset_resolution_s": 1.0,
+        "objective_weight_wait": 1.0,
+        "objective_weight_stop": 2.0,
+        "progression_tolerance_s": 10.0
+      },
+      "vehicles_generated": 40,
+      "first_arrivals_forward": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "verification": {
+        "performed": true,
+        "completed": true,
+        "feasible_plans": 194481,
+        "plans_considered": 12960000,
+        "best_objective": 605.0,
+        "csp_matches_brute_force": true
+      },
+      "algorithm_search_times_s": {
+        "uncoordinated": 0.0001,
+        "greedy": 0.0001,
+        "csp": 16.134
+      }
+    },
+    "H1": {
+      "scenario": "H1",
+      "description": "Sensitivity: 5 intersections, 30 km/h",
+      "config": {
+        "n_intersections": 5,
+        "cycle_length": 60.0,
+        "green_duration": 30.0,
+        "link_distance_m": 400.0,
+        "link_distances_m": null,
+        "speed_kmh": 30.0,
+        "demand_level": "medium",
+        "vehicles_per_direction": 20,
+        "headway_s": 1.0,
+        "departure_pattern": "platoon",
+        "direction_mode": "both",
+        "departure_start_s": 0.0,
+        "jitter_s": 0.0,
+        "seed": 42,
+        "offset_resolution_s": 5.0,
+        "objective_weight_wait": 1.0,
+        "objective_weight_stop": 2.0,
+        "progression_tolerance_s": null
+      },
+      "vehicles_generated": 40,
+      "first_arrivals_forward": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "verification": {
+        "performed": true,
+        "completed": true,
+        "feasible_plans": 20736,
+        "plans_considered": 20736,
+        "best_objective": 409.0,
+        "csp_matches_brute_force": true
+      },
+      "algorithm_search_times_s": {
+        "uncoordinated": 0.0001,
+        "greedy": 0.0001,
+        "csp": 2.202
+      }
+    },
+    "H2": {
+      "scenario": "H2",
+      "description": "Sensitivity: 5 intersections, 50 km/h",
+      "config": {
+        "n_intersections": 5,
+        "cycle_length": 60.0,
+        "green_duration": 30.0,
+        "link_distance_m": 400.0,
+        "link_distances_m": null,
+        "speed_kmh": 50.0,
+        "demand_level": "medium",
+        "vehicles_per_direction": 20,
+        "headway_s": 1.0,
+        "departure_pattern": "platoon",
+        "direction_mode": "both",
+        "departure_start_s": 0.0,
+        "jitter_s": 0.0,
+        "seed": 42,
+        "offset_resolution_s": 5.0,
+        "objective_weight_wait": 1.0,
+        "objective_weight_stop": 2.0,
+        "progression_tolerance_s": null
+      },
+      "vehicles_generated": 40,
+      "first_arrivals_forward": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "verification": {
+        "performed": true,
+        "completed": true,
+        "feasible_plans": 20736,
+        "plans_considered": 20736,
+        "best_objective": 24.0,
+        "csp_matches_brute_force": true
+      },
+      "algorithm_search_times_s": {
+        "uncoordinated": 0.0002,
+        "greedy": 0.0002,
+        "csp": 2.2943
+      }
+    },
+    "J1": {
+      "scenario": "J1",
+      "description": "Sensitivity: objective weights alpha=1, beta=0",
+      "config": {
+        "n_intersections": 5,
+        "cycle_length": 60.0,
+        "green_duration": 30.0,
+        "link_distance_m": 400.0,
+        "link_distances_m": null,
+        "speed_kmh": 40.0,
+        "demand_level": "medium",
+        "vehicles_per_direction": 20,
+        "headway_s": 1.0,
+        "departure_pattern": "platoon",
+        "direction_mode": "both",
+        "departure_start_s": 0.0,
+        "jitter_s": 0.0,
+        "seed": 42,
+        "offset_resolution_s": 5.0,
+        "objective_weight_wait": 1.0,
+        "objective_weight_stop": 0.0,
+        "progression_tolerance_s": null
+      },
+      "vehicles_generated": 40,
+      "first_arrivals_forward": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "verification": {
+        "performed": true,
+        "completed": true,
+        "feasible_plans": 20736,
+        "plans_considered": 20736,
+        "best_objective": 540.0,
+        "csp_matches_brute_force": true
+      },
+      "algorithm_search_times_s": {
+        "uncoordinated": 0.0001,
+        "greedy": 0.0001,
+        "csp": 2.0772
+      }
+    },
+    "J2": {
+      "scenario": "J2",
+      "description": "Sensitivity: objective weights alpha=1, beta=4",
+      "config": {
+        "n_intersections": 5,
+        "cycle_length": 60.0,
+        "green_duration": 30.0,
+        "link_distance_m": 400.0,
+        "link_distances_m": null,
+        "speed_kmh": 40.0,
+        "demand_level": "medium",
+        "vehicles_per_direction": 20,
+        "headway_s": 1.0,
+        "departure_pattern": "platoon",
+        "direction_mode": "both",
+        "departure_start_s": 0.0,
+        "jitter_s": 0.0,
+        "seed": 42,
+        "offset_resolution_s": 5.0,
+        "objective_weight_wait": 1.0,
+        "objective_weight_stop": 4.0,
+        "progression_tolerance_s": null
+      },
+      "vehicles_generated": 40,
+      "first_arrivals_forward": [
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+        4.0
+      ],
+      "verification": {
+        "performed": true,
+        "completed": true,
+        "feasible_plans": 20736,
+        "plans_considered": 20736,
+        "best_objective": 696.0,
+        "csp_matches_brute_force": true
+      },
+      "algorithm_search_times_s": {
+        "uncoordinated": 0.0005,
+        "greedy": 0.0005,
+        "csp": 2.1196
+      }
+    }
+  }
+}

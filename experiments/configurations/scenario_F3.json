@@ -1,0 +1,22 @@
+{
+  "name": "F3",
+  "description": "Sensitivity: 5 intersections, high demand",
+  "n_intersections": 5,
+  "cycle_length": 60.0,
+  "green_duration": 30.0,
+  "link_distance_m": 400.0,
+  "link_distances_m": null,
+  "speed_kmh": 40.0,
+  "demand_level": "high",
+  "vehicles_per_direction": 50,
+  "headway_s": 1.0,
+  "departure_pattern": "platoon",
+  "direction_mode": "both",
+  "departure_start_s": 0.0,
+  "jitter_s": 0.0,
+  "seed": 42,
+  "offset_resolution_s": 5.0,
+  "objective_weight_wait": 1.0,
+  "objective_weight_stop": 2.0,
+  "progression_tolerance_s": null
+}

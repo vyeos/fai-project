@@ -1,0 +1,30 @@
+# CITATION file for the Classical Traffic Signal Coordination project.
+# If you prefer a specific citation format not listed here, adapt from BibTeX.
+title: "Classical AI-Based Traffic Signal Coordination"
+abstract: >-
+  An educational decision-support system that coordinates signal offsets along an
+  arterial corridor. It compares an uncoordinated timing baseline, a greedy one-way
+  progression baseline, and a constraint-satisfaction optimization approach using
+  backtracking search, forward checking, and branch-and-bound. All plans are
+  evaluated with a deterministic corridor simulation measuring vehicle waiting time,
+  stops, search effort (nodes, backtracks, forward-check reductions), and runtime.
+authors:
+  - family-names: Patel
+    given-names: Rudra
+    affiliation: "Adani University, Department of Computer Science and Engineering (AI-ML)"
+  - family-names: Navadiya
+    given-names: Pruthvi
+    affiliation: "Adani University, Department of Computer Science and Engineering (AI-ML)"
+license: MIT
+version: "1.0.0"
+keywords:
+  - "traffic signal coordination"
+  - "constraint satisfaction problem"
+  - "backtracking search"
+  - "forward checking"
+  - "branch and bound"
+message: >-
+  Please cite this project in academic reports. This software is an educational
+  simulation and decision-support prototype; it is not a certified traffic-control
+  system and its synthetic results must not be presented as field measurements.
+type: software

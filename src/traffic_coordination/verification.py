@@ -45,6 +45,7 @@ class ExhaustiveResult:
             in that case the reported best is *not* guaranteed to be optimal.
         elapsed_s: Wall-clock seconds (``time.perf_counter``).
         best_stops / best_waiting_time: performance of the best plan.
+
     """
 
     best_objective: float = float("nan")
@@ -75,6 +76,7 @@ def exhaustive_best(  # noqa: PLR0912
 
     Returns:
         An :class:`ExhaustiveResult`.
+
     """
     grid = config.offset_grid()
     cycle = config.cycle_length

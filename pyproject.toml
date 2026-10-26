@@ -33,6 +33,8 @@ dev = [
     "ruff>=0.4",
     "python-docx>=1.1",
     "python-pptx>=0.6.21",
+    "reportlab>=3.6",
+    "pypdf>=3.0",
 ]
 
 [tool.setuptools.packages.find]
@@ -56,6 +58,9 @@ ignore = [
 "tests/*" = ["D"]
 "app.py" = ["D"]
 "tools/*" = ["D"]
+# Prose content lives in long string blocks; reflowing it would break nothing
+# but massively diff the single content source shared by DOCX and PDF.
+"tools/report_content.py" = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -61,6 +61,7 @@ ignore = [
 # Prose content lives in long string blocks; reflowing it would break nothing
 # but massively diff the single content source shared by DOCX and PDF.
 "tools/report_content.py" = ["E501"]
+"tools/build_slides.py" = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -67,7 +67,7 @@ python -m streamlit run app.py
 | Pre-push check (no hosted CI) | `ruff check src tests app.py tools && pytest` |
 
 Benchmark outputs land in `experiments/results/` (CSV, JSON, `summary.md`)
-and figures in `experiments/figures/` (fig1–fig8).
+and seven figures in `experiments/figures/` (fig1–fig3, fig5–fig8; there is no fig4).
 
 ## Measured headline results
 

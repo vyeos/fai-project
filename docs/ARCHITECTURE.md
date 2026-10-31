@@ -19,7 +19,7 @@ traffic-signal-coordination/
 │   ├── verification.py             # independent exhaustive brute-force verifier
 │   ├── algorithms/
 │   │   ├── uncoordinated.py        # baseline: all offsets 0
-│   │   ├── greedy_progression.py   # baseline: offset = previous + travel time (mod C)
+│   │   ├── greedy.py               # baseline: offset = previous + travel time (mod C)
 │   │   └── csp_optimizer.py        # backtracking + forward checking + branch & bound
 │   ├── visualization/              # plotly figure builders (corridor, timeline, animation, traces)
 │   ├── experiments/
@@ -30,7 +30,7 @@ traffic-signal-coordination/
 │   └── ui_theme.py                 # dashboard CSS and HTML builders (masthead, ledger…)
 ├── tests/                          # 81 pytest tests (unit + integration)
 ├── experiments/results/            # measured benchmark outputs (CSV, JSON, summary.md)
-├── experiments/figures/            # generated matplotlib figures (fig1–fig8)
+├── experiments/figures/            # 7 generated matplotlib figures (fig1–3, fig5–8)
 └── docs/                           # this documentation + screenshots/
 ```
 

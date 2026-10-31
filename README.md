@@ -1,6 +1,6 @@
 # 🚦 Classical AI-Based Traffic Signal Coordination
 
-[![tests](https://github.com/USERNAME/traffic-signal-coordination/actions/workflows/tests.yml/badge.svg)](https://github.com/USERNAME/traffic-signal-coordination/actions/workflows/tests.yml)
+[![tests](https://github.com/vyeos/fai-project/actions/workflows/tests.yml/badge.svg)](https://github.com/vyeos/fai-project/actions/workflows/tests.yml)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.12-blue)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-261230.svg)](https://docs.astral.sh/ruff/)
@@ -41,8 +41,8 @@ enough.
 ## Quickstart
 
 ```bash
-git clone https://github.com/USERNAME/traffic-signal-coordination.git
-cd traffic-signal-coordination
+git clone https://github.com/vyeos/fai-project.git
+cd fai-project
 
 python -m venv .venv
 # Windows:

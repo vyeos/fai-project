@@ -263,7 +263,7 @@ def build() -> Presentation:
     add_content_slide(deck, "Limitations, future work, takeaways", [
         "Limitations: no queues/capacity, one coordinated phase, synthetic demand, h(s)=0 prunes nothing",
         "Future: informative admissible bound; queueing model; min-conflicts for large N; multi-phase timing; field validation",
-        "Engineering: 76 passing tests, ruff-clean, GitHub Actions CI (py 3.10/3.12), one-command reproducible benchmarks",
+        "Engineering: 76 passing tests, ruff-clean, lint + tests run locally before every push, one-command reproducible benchmarks",
         "Deliverables: report DOCX+PDF, this deck + speaker notes, demo guide, 42-question viva prep, 15 live-verified screenshots",
         "Takeaway: formulation honest, search complete or honestly incomplete, optimality verified wherever feasible",
     ])

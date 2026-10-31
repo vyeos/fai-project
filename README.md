@@ -1,6 +1,5 @@
 # 🚦 Classical AI-Based Traffic Signal Coordination
 
-[![tests](https://github.com/vyeos/fai-project/actions/workflows/tests.yml/badge.svg)](https://github.com/vyeos/fai-project/actions/workflows/tests.yml)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.12-blue)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-261230.svg)](https://docs.astral.sh/ruff/)
@@ -64,7 +63,8 @@ python -m streamlit run app.py
 | One scenario | `... --scenario B` |
 | Sensitivity scenarios only | `... --sensitivity` |
 | Test suite (76 tests) | `pytest` |
-| Lint | `ruff check src tests app.py` |
+| Lint | `ruff check src tests app.py tools` |
+| Pre-push check (no hosted CI) | `ruff check src tests app.py tools && pytest` |
 
 Benchmark outputs land in `experiments/results/` (CSV, JSON, `summary.md`)
 and figures in `experiments/figures/` (fig1–fig8).

@@ -29,8 +29,7 @@ traffic-signal-coordination/
 ├── tests/                          # 76 pytest tests (unit + integration)
 ├── experiments/results/            # measured benchmark outputs (CSV, JSON, summary.md)
 ├── experiments/figures/            # generated matplotlib figures (fig1–fig8)
-├── docs/                           # this documentation + screenshots/
-└── .github/workflows/tests.yml     # CI: ruff + pytest + benchmark smoke run
+└── docs/                           # this documentation + screenshots/
 ```
 
 ## 2. Simulation model (single source of truth)

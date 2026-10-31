@@ -93,7 +93,7 @@ BLOCKS: list[tuple] = [
         "76 pytest tests covering timing arithmetic, simulator semantics, algorithm status contracts and cross-algorithm integration on identical demand.",
         "Ruff-clean codebase (style, imports, naming and docstring rules enforced; line length 100).",
         "Type hints and docstrings throughout the package.",
-        "CI on GitHub Actions: matrix over Python 3.10 and 3.12 running ruff, pytest and a single-scenario benchmark smoke run.",
+        "Local pre-push checks: ruff and the full pytest suite run before every push to GitHub (no hosted CI).",
         "One-command reproducibility: python -m traffic_coordination.experiments.benchmark_runner --all regenerates every result CSV/JSON, the markdown summary and all figures from seeds and code alone.",
         "MIT license; no secrets or credentials committed; all third-party references listed in References.",
     ]),

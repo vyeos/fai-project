@@ -200,8 +200,8 @@ honestly — here is the measured table."**
     Fixed seeds per scenario, deterministic simulator, one-command benchmark
     runner (`python -m traffic_coordination.experiments.benchmark_runner
     --all`) writing CSV/JSON/markdown artefacts, configuration JSONs archived
-    with results, and CI (GitHub Actions) running lint + tests + a smoke
-    benchmark on two Python versions.
+    with results, and lint (ruff) + the full test suite run locally before
+    every push to GitHub.
 
 32. **How does the dashboard avoid freezing?**
     CSP budget (s) and evaluation cap sliders; streamlit spinner with

@@ -37,7 +37,7 @@ BLOCKS: list[tuple] = [
     ]),
 
     ("h1", "Abstract"),
-    ("p", "Traffic signals along an arterial corridor are usually timed independently, so platoons released at one green window arrive at the next signal during red and stop unnecessarily. We formulate offset selection for a chain of N signalized intersections as a finite constraint satisfaction problem: variables are green-window offsets on a discrete grid, the objective is the weighted sum of total waiting time and total stops evaluated by a deterministic corridor simulator. We compare an uncoordinated baseline (all offsets zero), a greedy one-way progression heuristic, and a CSP optimizer combining backtracking search, forward checking and branch and bound with an admissible (but weak) h(s) = 0 bound. All three algorithms are scored by one shared simulator on identical generated demand, and the CSP's claimed optimum is cross-checked by an independently written exhaustive verifier wherever the search space allows. On our default five-intersection, medium-demand scenario the measured objective falls from J = 3780 (uncoordinated) to J = 618 (CSP), an 83.7% improvement that independent verification over all 20 736 feasible plans confirms. The project is delivered as a tested, linted Python package (76 pytest tests, ruff-clean), a reproducible benchmark suite with archived CSV/JSON results and eight figures, a nine-tab Streamlit dashboard verified live in a browser, and continuous integration that re-runs lint, tests and a benchmark smoke build on two Python versions."),
+    ("p", "Traffic signals along an arterial corridor are usually timed independently, so platoons released at one green window arrive at the next signal during red and stop unnecessarily. We formulate offset selection for a chain of N signalized intersections as a finite constraint satisfaction problem: variables are green-window offsets on a discrete grid, the objective is the weighted sum of total waiting time and total stops evaluated by a deterministic corridor simulator. We compare an uncoordinated baseline (all offsets zero), a greedy one-way progression heuristic, and a CSP optimizer combining backtracking search, forward checking and branch and bound with an admissible (but weak) h(s) = 0 bound. All three algorithms are scored by one shared simulator on identical generated demand, and the CSP's claimed optimum is cross-checked by an independently written exhaustive verifier wherever the search space allows. On our default five-intersection, medium-demand scenario the measured objective falls from J = 3780 (uncoordinated) to J = 618 (CSP), an 83.7% improvement that independent verification over all 20 736 feasible plans confirms. The project is delivered as a tested, linted Python package (81 pytest tests, ruff-clean), a reproducible benchmark suite with archived CSV/JSON results and eight figures, a nine-tab Streamlit dashboard verified live in a browser, and lint and tests run locally before every push."),
     ("note", "Keywords: constraint satisfaction, backtracking, forward checking, branch and bound, traffic signal coordination, arterial progression, deterministic simulation."),
 
     ("h1", "1. Introduction"),
@@ -48,7 +48,7 @@ BLOCKS: list[tuple] = [
         "Implement three comparable algorithms (uncoordinated, greedy, CSP) evaluated by one shared deterministic simulator.",
         "Verify optimality claims with an independent exhaustive search, honestly recording skipped or incomplete cases.",
         "Quantify behaviour across a benchmark matrix (3–7 intersections; low/medium/high demand; 5 s and 1 s resolutions) and four sensitivity axes.",
-        "Deliver a tested, linted, reproducible package with a dashboard, continuous integration, and complete academic artefacts.",
+        "Deliver a tested, linted, reproducible package with a dashboard, local pre-push checks, and complete academic artefacts.",
     ]),
 
     ("h1", "2. Background and related work"),
@@ -90,7 +90,7 @@ BLOCKS: list[tuple] = [
     ("p", "The codebase is a src-layout Python package (traffic_coordination) with a thin dashboard entry point (app.py). Core responsibilities are separated: models.py (corridor, vehicles, plans), config.py (validated scenario configuration), signal_timing.py (pure timing arithmetic), scenario_generator.py (demand synthesis), simulator.py (evaluation), metrics.py (result containers), algorithms/ (the three strategies), verification.py (exhaustive check), visualization/ (plotly figures), experiments/ (register, CLI runner and reporting), ui_state.py (dashboard run state)."),
     ("h2", "5.2 Engineering quality"),
     ("bullets", [
-        "76 pytest tests covering timing arithmetic, simulator semantics, algorithm status contracts and cross-algorithm integration on identical demand.",
+        "81 pytest tests covering timing arithmetic, simulator semantics, algorithm status contracts, cross-algorithm integration on identical demand and the dashboard theme.",
         "Ruff-clean codebase (style, imports, naming and docstring rules enforced; line length 100).",
         "Type hints and docstrings throughout the package.",
         "Local pre-push checks: ruff and the full pytest suite run before every push to GitHub (no hosted CI).",
@@ -149,7 +149,7 @@ BLOCKS: list[tuple] = [
     ]),
 
     ("h1", "8. Conclusion and future work"),
-    ("p", "Offset selection on an arterial corridor was framed, implemented and evaluated as a classical AI search problem. On identical demand and one shared simulator, the CSP optimizer reduced the measured objective by 80–89% relative to uncoordinated timings and by 23–58% relative to the greedy progression rule across the main scenarios, with every completed search independently verified as optimal and every boundary case (skipped verification, budget expiry) reported honestly. The deliverable package — 76 passing tests, lint enforcement, continuous integration, one-command reproducible benchmarks, and a live-verified dashboard — demonstrates the full engineering loop from formulation to interactive decision support."),
+    ("p", "Offset selection on an arterial corridor was framed, implemented and evaluated as a classical AI search problem. On identical demand and one shared simulator, the CSP optimizer reduced the measured objective by 80–89% relative to uncoordinated timings and by 23–58% relative to the greedy progression rule across the main scenarios, with every completed search independently verified as optimal and every boundary case (skipped verification, budget expiry) reported honestly. The deliverable package — 81 passing tests, lint enforcement, local pre-push checks, one-command reproducible benchmarks, and a live-verified dashboard — demonstrates the full engineering loop from formulation to interactive decision support."),
     ("p", "Future work, in priority order: (1) a genuinely informative admissible bound for branch and bound; (2) queueing and capacity effects in the simulator; (3) local search (min-conflicts) or hybrid methods to scale beyond N = 7 without the tolerance constraint; (4) multi-phase (per-movement) timing; (5) validation against a real corridor layout as an applied-AI extension."),
 
     ("h1", "References"),
@@ -166,7 +166,7 @@ BLOCKS: list[tuple] = [
     ("h1", "Appendix A — Reproduction commands"),
     ("code", [
         "python -m venv .venv && .venv/Scripts/pip install -e '.[dev]'   # Windows",
-        "python -m pytest                                   # 76 tests",
+        "python -m pytest                                   # 81 tests",
         "ruff check src tests app.py                        # lint",
         "python -m traffic_coordination.experiments.benchmark_runner --all",
         "python -m streamlit run app.py                     # dashboard",

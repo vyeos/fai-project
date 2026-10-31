@@ -123,7 +123,7 @@ simultaneously — a robustness result, not a tuning artifact.
 
 Limitations named on the slide are the same ones in the report's §7 — no new
 surprises in the viva. Future work: an informative admissible bound, queueing,
-min-conflicts for large N, multi-phase timing. Engineering summary: 76 passing
+min-conflicts for large N, multi-phase timing. Engineering summary: 81 passing
 tests, ruff-clean source, lint + tests run locally before every push, one-command reproducible
 benchmarks, MIT-licensed clean tree. Final line: *every number traces to a
 results file; every optimality claim carries verification or an explicit,

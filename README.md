@@ -62,7 +62,7 @@ python -m streamlit run app.py
 | Main scenarios only | `... --main` |
 | One scenario | `... --scenario B` |
 | Sensitivity scenarios only | `... --sensitivity` |
-| Test suite (76 tests) | `pytest` |
+| Test suite (81 tests) | `pytest` |
 | Lint | `ruff check src tests app.py tools` |
 | Pre-push check (no hosted CI) | `ruff check src tests app.py tools && pytest` |
 

@@ -190,7 +190,7 @@ honestly — here is the measured table."**
     fast enough for a classroom demo.
 
 30. **How is the code kept correct?**
-    76 pytest tests (models, timing arithmetic, simulator edge cases, CSP
+    81 pytest tests (models, timing arithmetic, simulator edge cases, CSP
     status semantics, cross-algorithm integration), ruff linting (line length
     100), type hints and docstrings throughout, and an independent exhaustive
     verifier cross-checking the CSP's claimed optimum wherever the space is

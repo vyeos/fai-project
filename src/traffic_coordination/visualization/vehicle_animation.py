@@ -7,7 +7,18 @@ import plotly.graph_objects as go
 
 from ..config import ScenarioConfig
 from ..models import Corridor, SimulationResult
-from . import COLOR_FORWARD, COLOR_REVERSE, base_layout
+from . import (
+    COLOR_BG,
+    COLOR_FORWARD,
+    COLOR_LINE,
+    COLOR_MUTED,
+    COLOR_REVERSE,
+    COLOR_ROAD,
+    COLOR_SURFACE,
+    COLOR_TEXT,
+    FONT_MONO,
+    base_layout,
+)
 from .corridor import vehicle_position_at
 from .trajectory import vehicle_position_series
 
@@ -56,7 +67,7 @@ def vehicle_animation_figure(
                         symbol=(
                             "triangle-right" if trace.direction == "forward" else "triangle-left"
                         ),
-                        line={"width": 1, "color": "white"},
+                        line={"width": 1, "color": COLOR_BG},
                     ),
                     hovertemplate=f"v{trace.vehicle_id} ({trace.direction})<extra></extra>",
                     showlegend=False,
@@ -77,7 +88,7 @@ def vehicle_animation_figure(
             x=[min(positions) - 60, max(positions) + 60],
             y=[0, 0],
             mode="lines",
-            line={"width": 10, "color": "#cfd8dc"},
+            line={"width": 14, "color": COLOR_ROAD},
             hoverinfo="skip",
             showlegend=False,
         )
@@ -96,7 +107,7 @@ def vehicle_animation_figure(
                     symbol=(
                         "triangle-right" if trace.direction == "forward" else "triangle-left"
                     ),
-                    line={"width": 1, "color": "white"},
+                    line={"width": 1, "color": COLOR_BG},
                 ),
                 hovertemplate=f"v{trace.vehicle_id} ({trace.direction})<extra></extra>",
                 showlegend=False,
@@ -124,7 +135,8 @@ def vehicle_animation_figure(
                 mode="markers+text",
                 text=[f"I{i + 1} (O={offset:.0f}s)"],
                 textposition="top center",
-                marker=dict(size=22, color="#455a64"),
+                textfont=dict(family=FONT_MONO, size=11, color=COLOR_MUTED),
+                marker=dict(size=14, color=COLOR_LINE, line={"width": 3, "color": COLOR_BG}),
                 showlegend=False,
                 hovertemplate=f"I{i + 1} green at t=0: {state}<extra></extra>",
             )
@@ -132,11 +144,10 @@ def vehicle_animation_figure(
 
     fig.layout.update(
         base_layout(
-            title="Vehicle animation (press play; colour = travel direction)",
             showlegend=False,
         )
     )
-    fig.update_xaxes(title="Position along corridor (m)")
+    fig.update_xaxes(title=None, ticksuffix=" m", showgrid=False)
     fig.update_yaxes(visible=False, range=[-40, 40])
     slider_steps = [
         {
@@ -168,11 +179,34 @@ def vehicle_animation_figure(
                         "args": [[None], {"mode": "immediate"}],
                     },
                 ],
-                "x": 0,
-                "y": 1.15,
+                "x": 1,
+                "xanchor": "right",
+                "y": 1.18,
+                "direction": "left",
+                "pad": {"r": 0, "t": 0},
+                "showactive": False,
+                "bgcolor": COLOR_SURFACE,
+                "bordercolor": COLOR_LINE,
+                "font": {"color": COLOR_TEXT, "size": 12},
             }
         ],
-        sliders=[{"steps": slider_steps, "x": 0.05, "len": 0.9}],
+        sliders=[
+            {
+                "steps": slider_steps,
+                "x": 0,
+                "len": 1,
+                "pad": {"t": 30},
+                "bgcolor": COLOR_SURFACE,
+                "bordercolor": COLOR_LINE,
+                "activebgcolor": COLOR_REVERSE,
+                "tickcolor": COLOR_LINE,
+                "font": {"family": FONT_MONO, "size": 10, "color": COLOR_MUTED},
+                "currentvalue": {
+                    "prefix": "",
+                    "font": {"family": FONT_MONO, "size": 11, "color": COLOR_MUTED},
+                },
+            }
+        ],
         height=340,
     )
     return fig

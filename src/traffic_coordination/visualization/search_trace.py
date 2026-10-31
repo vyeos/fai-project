@@ -5,7 +5,28 @@ from __future__ import annotations
 import pandas as pd
 import plotly.graph_objects as go
 
-from . import base_layout
+from . import (
+    COLOR_ACCENT,
+    COLOR_FAINT,
+    COLOR_FORWARD,
+    COLOR_GREEN,
+    COLOR_MUTED,
+    COLOR_RED,
+    base_layout,
+)
+
+# Event palette: the accent marks the incumbent ('best'); greys carry the bulk.
+EVENT_COLORS = {
+    "assign": COLOR_FORWARD,
+    "reject": COLOR_RED,
+    "fc_remove": "#5f8f86",
+    "dead_end": "#a0675f",
+    "backtrack": COLOR_MUTED,
+    "evaluate": COLOR_GREEN,
+    "best": COLOR_ACCENT,
+    "prune_bb": "#c9cdd3",
+    "limit": COLOR_FAINT,
+}
 
 __all__ = [
     "trace_dataframe",
@@ -58,17 +79,7 @@ def trace_depth_figure(trace_dict: dict[str, object]) -> go.Figure:
     """
     events = trace_dict.get("events", []) if isinstance(trace_dict, dict) else []
     fig = go.Figure()
-    color_map = {
-        "assign": "#1565c0",
-        "reject": "#c62828",
-        "fc_remove": "#00897b",
-        "dead_end": "#8e24aa",
-        "backtrack": "#ef6c00",
-        "evaluate": "#2e7d32",
-        "best": "#6a1b9a",
-        "prune_bb": "#5677fcff",
-        "limit": "#757575",
-    }
+    color_map = EVENT_COLORS
     for event_type in color_map:
         matching = [e for e in events if e.get("type") == event_type]
         xs = [i for i, e in enumerate(events) if e.get("type") == event_type]
@@ -79,7 +90,7 @@ def trace_depth_figure(trace_dict: dict[str, object]) -> go.Figure:
                     x=xs,
                     y=ys,
                     mode="markers",
-                    marker=dict(size=6, color=color_map[event_type]),
+                    marker=dict(size=5, color=color_map[event_type], opacity=0.9),
                     name=event_type,
                     hovertemplate="%{customdata}<extra></extra>",
                     customdata=[str({k: v for k, v in e.items() if k != "type"}) for e in matching],
@@ -92,10 +103,10 @@ def trace_depth_figure(trace_dict: dict[str, object]) -> go.Figure:
             y=0,
             text="trace truncated at event cap",
             showarrow=False,
-            font=dict(color="#757575"),
+            font=dict(color=COLOR_FAINT),
         )
     fig.layout.update(
-        base_layout(title="Recorded search trace: events by variable touched")
+        base_layout(title="Events by variable touched", height=380)
     )
     fig.update_xaxes(title="Event index (chronological)")
     fig.update_yaxes(title="Variable index", dtick=1)
@@ -105,21 +116,15 @@ def trace_depth_figure(trace_dict: dict[str, object]) -> go.Figure:
 def trace_event_summary_figure(trace_dict: dict[str, object]) -> go.Figure:
     """Bar chart of recorded event counts by type."""
     counts = trace_counts(trace_dict)
-    palette = [
-        "#1565c0",
-        "#c62828",
-        "#00897b",
-        "#8e24aa",
-        "#ef6c00",
-        "#2e7d32",
-        "#6a1b9a",
-        "#5c6bc0",
-        "#757575",
-    ]
     fig = go.Figure(
-        go.Bar(x=list(counts.index), y=counts.values, marker_color=palette[: len(counts)])
+        go.Bar(
+            x=list(counts.index),
+            y=counts.values,
+            marker_color=[EVENT_COLORS.get(str(k), COLOR_FAINT) for k in counts.index],
+            marker_line_width=0,
+        )
     )
-    fig.layout.update(base_layout(title="Search-trace event counts (within event cap)"))
+    fig.layout.update(base_layout(title="Event counts (within event cap)", height=380))
     fig.update_xaxes(title="Event type")
     fig.update_yaxes(title="Count")
     return fig

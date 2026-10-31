@@ -6,7 +6,18 @@ import plotly.graph_objects as go
 
 from ..config import ScenarioConfig
 from ..models import Corridor, SimulationResult
-from . import COLOR_FORWARD, COLOR_REVERSE, base_layout
+from . import (
+    COLOR_BG,
+    COLOR_FAINT,
+    COLOR_FORWARD,
+    COLOR_GREEN,
+    COLOR_MUTED,
+    COLOR_RED,
+    COLOR_REVERSE,
+    COLOR_ROAD,
+    FONT_MONO,
+    base_layout,
+)
 from .trajectory import vehicle_position_series
 
 __all__ = ["corridor_figure", "vehicle_position_at"]
@@ -47,7 +58,7 @@ def corridor_figure(
             x=[min(positions) - 60, max(positions) + 60],
             y=[0, 0],
             mode="lines",
-            line={"width": 10, "color": "#cfd8dc"},
+            line={"width": 14, "color": COLOR_ROAD},
             hoverinfo="skip",
             showlegend=False,
         )
@@ -55,7 +66,13 @@ def corridor_figure(
     # links with distances
     for i, d in enumerate(corridor.link_distances_m):
         mid = (positions[i] + positions[i + 1]) / 2
-        fig.add_annotation(x=mid, y=-22, text=f"{d:.0f} m", showarrow=False, font=dict(size=10))
+        fig.add_annotation(
+            x=mid,
+            y=-24,
+            text=f"{d:.0f} m",
+            showarrow=False,
+            font=dict(family=FONT_MONO, size=10, color=COLOR_FAINT),
+        )
 
     # signals as markers colored by state at time_s
     from ..signal_timing import is_green
@@ -69,10 +86,11 @@ def corridor_figure(
                 mode="markers+text",
                 text=[f"I{i + 1}<br>O={offset:.0f}s"],
                 textposition="top center",
+                textfont=dict(family=FONT_MONO, size=11, color=COLOR_MUTED),
                 marker=dict(
-                    size=26,
-                    color="#2e7d32" if green else "#c62828",
-                    line={"width": 2, "color": "#263238"},
+                    size=22,
+                    color=COLOR_GREEN if green else COLOR_RED,
+                    line={"width": 4, "color": COLOR_BG},
                 ),
                 name=f"I{i + 1}",
                 hovertemplate=(
@@ -96,7 +114,7 @@ def corridor_figure(
                     size=12,
                     color=COLOR_FORWARD if trace.direction == "forward" else COLOR_REVERSE,
                     symbol="triangle-right" if trace.direction == "forward" else "triangle-left",
-                    line={"width": 1, "color": "white"},
+                    line={"width": 1, "color": COLOR_BG},
                 ),
                 name=f"vehicle {trace.vehicle_id}",
                 hovertemplate=(
@@ -109,10 +127,11 @@ def corridor_figure(
 
     fig.layout.update(
         base_layout(
-            title=f"Corridor at t = {time_s:.0f} s (green = coordinated phase active)",
+            title=f"t = {time_s:.0f} s",
             showlegend=False,
         )
     )
-    fig.update_xaxes(title="Position along corridor (m)")
+    fig.update_xaxes(title=None, ticksuffix=" m", showgrid=False)
     fig.update_yaxes(visible=False, range=[-60, 60])
+    fig.update_layout(height=300)
     return fig

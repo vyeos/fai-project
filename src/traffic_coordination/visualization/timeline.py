@@ -5,10 +5,10 @@ from __future__ import annotations
 import plotly.graph_objects as go
 
 from ..config import ScenarioConfig
-from . import base_layout
+from . import COLOR_GREEN_FILL, COLOR_MUTED, COLOR_RED_FILL, FONT_MONO, base_layout
 
-GREEN_FILL = "#d6ecd8"
-RED_FILL = "#f6d5d3"
+GREEN_FILL = COLOR_GREEN_FILL
+RED_FILL = COLOR_RED_FILL
 
 __all__ = ["signal_timeline_figure"]
 
@@ -37,8 +37,8 @@ def signal_timeline_figure(
                 "yref": "y",
                 "x0": 0,
                 "x1": horizon,
-                "y0": i - 0.36,
-                "y1": i + 0.36,
+                "y0": i - 0.32,
+                "y1": i + 0.32,
                 "fillcolor": RED_FILL,
                 "line": {"width": 0},
             }
@@ -59,8 +59,8 @@ def signal_timeline_figure(
                     "yref": "y",
                     "x0": max(w_start, 0),
                     "x1": min(w_end, horizon),
-                    "y0": y - 0.36,
-                    "y1": y + 0.36,
+                    "y0": y - 0.32,
+                    "y1": y + 0.32,
                     "fillcolor": GREEN_FILL,
                     "line": {"width": 0},
                 }
@@ -78,17 +78,18 @@ def signal_timeline_figure(
         ),
     )
     fig.layout.update(
-        base_layout(title="Signal timeline: green windows per intersection")
+        base_layout(title="Green windows per intersection", height=120 + 46 * n)
     )
     note = f"O₁ = 0 reference · C = {config.cycle_length:.0f} s · G = {config.green_duration:.0f} s"
     fig.add_annotation(
-        x=0,
-        yref="y",
-        y=n - 0.62,
-        xanchor="left",
-        yanchor="top",
+        xref="paper",
+        x=1,
+        yref="paper",
+        y=1.02,
+        xanchor="right",
+        yanchor="bottom",
         text=note,
         showarrow=False,
-        font=dict(size=11, color="#37474f"),
+        font=dict(family=FONT_MONO, size=11, color=COLOR_MUTED),
     )
     return fig

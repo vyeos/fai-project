@@ -8,6 +8,7 @@
 traffic-signal-coordination/
 ├── app.py                          # Streamlit dashboard (9 tabs)
 ├── pyproject.toml                  # packaging, ruff and pytest configuration
+├── .streamlit/config.toml          # dark theme, Geist fonts, minimal toolbar
 ├── src/traffic_coordination/
 │   ├── models.py                   # Intersection, Link, Vehicle, TimingPlan, SimulationResult
 │   ├── config.py                   # ScenarioConfig validation, DEMAND_PRESETS
@@ -25,8 +26,9 @@ traffic-signal-coordination/
 │   │   ├── scenarios.py            # registered benchmark scenarios A–E and F/G/H/J
 │   │   ├── benchmark_runner.py     # CLI: python -m traffic_coordination.experiments.benchmark_runner
 │   │   └── reporting.py            # CSV/JSON/markdown summary writers
-│   └── ui_state.py                 # dashboard run-state helpers (RunBundle, run cache)
-├── tests/                          # 76 pytest tests (unit + integration)
+│   ├── ui_state.py                 # dashboard run-state helpers (RunBundle, run cache)
+│   └── ui_theme.py                 # dashboard CSS and HTML builders (masthead, ledger…)
+├── tests/                          # 81 pytest tests (unit + integration)
 ├── experiments/results/            # measured benchmark outputs (CSV, JSON, summary.md)
 ├── experiments/figures/            # generated matplotlib figures (fig1–fig8)
 └── docs/                           # this documentation + screenshots/
@@ -128,19 +130,31 @@ ScenarioConfig ──> make_scenario ──> (corridor, vehicles)
 
 `app.py` renders nine tabs driven by one sidebar `ScenarioConfig`:
 
-1. **Overview** — scenario KPIs + last-run comparison table.
+1. **Overview** — search-space figure, scenario spec sheet, last-run ledger.
 2. **Corridor** — corridor diagram at time t (slider) + vehicle animation.
 3. **Signals** — green-window Gantt over a horizon slider.
 4. **Algorithms** — run all / single runs (cached per scenario+budget) /
    benchmark suite runner.
-5. **Results** — comparison table, charts, verification banner, final plan.
-6. **Search inspector** — CSPSearchStats table, trace summary + depth charts,
+5. **Results** — objective reduction, verification statement, ledger,
+   charts, final plan.
+6. **Search inspector** — CSPSearchStats grid, trace summary + depth charts,
    event table (trace retains the first events up to its cap).
 7. **Sensitivity** — one-axis sweeps with a fast mode and an evaluation cap;
    values exceeding the cap are skipped with a visible warning.
 8. **Export** — CSV/JSON downloads of the current session's real run data.
 9. **Learn** — viva-ready explanations (state space, CSP, FC, BB, objective,
    growth, limitations).
+
+**Visual system.** A dark "control room" palette: cool off-black surfaces,
+hairline dividers instead of boxed cards, Geist for text and Geist Mono for
+every number. Signal amber is the single accent and marks the CSP; green and
+red appear only for real signal states. The palette lives in
+`visualization/__init__.py` and is shared by `ui_theme.py`, the Plotly figures
+and `.streamlit/config.toml`. The masthead runs the current timing plan as a
+row of animated signal heads; `tests/test_ui_theme.py` checks that each lamp is
+green exactly when `is_green` says so. Custom blocks render through `st.html`,
+whose sanitizer strips inline SVG, so the signal row and icons are embedded as
+SVG images.
 
 Honesty is first-class in the UI: budgets and caps are configurable, skipped
 verifications and incomplete statuses are shown verbatim, and every panel

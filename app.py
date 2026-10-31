@@ -30,6 +30,7 @@ import plotly.express as px  # noqa: E402
 import streamlit as st  # noqa: E402
 
 from traffic_coordination import __version__  # noqa: E402
+from traffic_coordination import ui_theme as ui  # noqa: E402
 from traffic_coordination.config import ScenarioConfig  # noqa: E402
 from traffic_coordination.experiments.scenarios import (  # noqa: E402
     RUN_SCENARIOS,
@@ -37,6 +38,9 @@ from traffic_coordination.experiments.scenarios import (  # noqa: E402
 )
 from traffic_coordination.metrics import (  # noqa: E402
     FEASIBLE_OPTIMAL,
+    FEASIBLE_SINGLE,
+    FEASIBLE_SUBOPTIMAL,
+    FEASIBLE_TIME_LIMIT,
     STATUS_NO_SOLUTION,
     AlgorithmResult,
     results_dataframe,
@@ -49,6 +53,10 @@ from traffic_coordination.ui_state import (  # noqa: E402
     config_fingerprint,
     run_all_algorithms,
 )
+from traffic_coordination.visualization import (  # noqa: E402
+    ALGORITHM_COLORS,
+    style_figure,
+)
 from traffic_coordination.visualization import search_trace as traceviz  # noqa: E402
 from traffic_coordination.visualization.corridor import corridor_figure  # noqa: E402
 from traffic_coordination.visualization.timeline import (  # noqa: E402
@@ -60,9 +68,9 @@ from traffic_coordination.visualization.vehicle_animation import (  # noqa: E402
 
 st.set_page_config(
     page_title="Traffic Signal Coordination — Classical AI",
-    page_icon="🚦",
+    page_icon=":material/traffic:",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="auto",
 )
 
 DEFAULTS: dict[str, Any] = {
@@ -88,18 +96,24 @@ DEFAULTS: dict[str, Any] = {
     "verify_flag": True,
 }
 
-CSS = """
-<style>
-    h1, h2, h3 { letter-spacing: -0.01em; }
-</style>
-"""
-
 BUNDLE_KEY = "last_bundle"
 BENCHMARK_KEY = "bench_frame"
 SWEEP_KEY = "sweep_frame"
 SINGLE_RUN_KEY = "single_run"
 
-NO_RUN_MSG = "No run for this scenario yet — open the **Algorithms** tab and press **Run all algorithms**."  # noqa: E501
+NO_RUN_TITLE = "No run for this scenario yet"
+NO_RUN_BODY = (
+    "Press <b>Run all algorithms</b> on the Overview or Algorithms tab. All three "
+    "strategies are evaluated on the same generated vehicles."
+)
+
+STATUS_LABELS = {
+    FEASIBLE_OPTIMAL: ("proven optimal", "ok"),
+    FEASIBLE_TIME_LIMIT: ("incomplete", "warn"),
+    FEASIBLE_SUBOPTIMAL: ("heuristic", "neutral"),
+    FEASIBLE_SINGLE: ("fixed plan", "neutral"),
+    STATUS_NO_SOLUTION: ("no feasible plan", "bad"),
+}
 
 
 def seed_default_state() -> None:
@@ -140,8 +154,7 @@ def apply_preset(name: str) -> None:
 def render_sidebar() -> tuple[ScenarioConfig | None, str | None]:
     """Render sidebar controls and return the validated config or an error."""
     with st.sidebar:
-        st.header("Scenario")
-        st.caption("Corridor, timing, demand and objective settings (validated).")
+        st.subheader("Scenario", anchor=False)
 
         preset = st.selectbox(
             "Load benchmark scenario",
@@ -190,11 +203,11 @@ def render_sidebar() -> tuple[ScenarioConfig | None, str | None]:
         )
 
         st.divider()
-        st.subheader("Demand")
+        st.subheader("Demand", anchor=False)
         st.selectbox(
             "Demand level label", ["low", "medium", "high", "custom"], key="demand_level"
         )
-        st.caption("Label only — the two values below define the demand precisely.")
+        st.caption("Label only. The two values below define the demand.")
         st.slider(
             "Vehicles per direction",
             min_value=2,
@@ -213,7 +226,7 @@ def render_sidebar() -> tuple[ScenarioConfig | None, str | None]:
         st.selectbox("Directions", ["both", "forward", "reverse"], key="direction_mode")
 
         st.divider()
-        st.subheader("Search & objective")
+        st.subheader("Search & objective", anchor=False)
         st.select_slider(
             "Offset resolution (s)", options=[1.0, 2.0, 5.0, 10.0], key="offset_resolution"
         )
@@ -251,11 +264,11 @@ def render_sidebar() -> tuple[ScenarioConfig | None, str | None]:
         )
 
         st.divider()
-        st.subheader("Run budget")
+        st.subheader("Run budget", anchor=False)
         st.slider(
             "CSP time budget (s)", min_value=1.0, max_value=300.0, step=1.0, key="csp_budget"
         )
-        st.caption("The CSP stops at this wall-clock budget and reports `incomplete` honestly.")
+        st.caption("At this wall-clock budget the CSP stops and reports `incomplete`.")
         st.checkbox("Cap simulated complete plans", key="cap_enabled")
         st.slider(
             "Evaluation cap",
@@ -269,8 +282,6 @@ def render_sidebar() -> tuple[ScenarioConfig | None, str | None]:
             "Verify CSP optimality by exhaustive search (small spaces)", key="verify_flag"
         )
 
-        st.divider()
-        st.caption(f"traffic-coordination v{__version__}")
 
     state = st.session_state
     config_dict: dict[str, Any] = {
@@ -296,7 +307,16 @@ def render_sidebar() -> tuple[ScenarioConfig | None, str | None]:
     try:
         return ScenarioConfig(**config_dict), None
     except ValueError as exc:
-        return None, f"Invalid scenario configuration: {exc}"
+        return None, str(exc)
+
+
+def current_bundle_quiet(config: ScenarioConfig | None) -> RunBundle | None:
+    """Return the cached run bundle when it matches ``config``, without notices."""
+    bundle = st.session_state.get(BUNDLE_KEY)
+    if config is not None and isinstance(bundle, RunBundle):
+        if config_fingerprint(bundle.config) == config_fingerprint(config):
+            return bundle
+    return None
 
 
 def current_bundle(config: ScenarioConfig) -> RunBundle | None:
@@ -305,7 +325,7 @@ def current_bundle(config: ScenarioConfig) -> RunBundle | None:
     if isinstance(bundle, RunBundle):
         if config_fingerprint(bundle.config) == config_fingerprint(config):
             return bundle
-        st.info("The scenario changed since the last run — re-run from the Algorithms tab.")
+        st.info("The scenario changed since the last run. Run the comparison again to refresh.")
     return None
 
 
@@ -331,73 +351,141 @@ def trimmed_simulation(simulation: SimulationResult, max_traces: int) -> Simulat
     return replace(simulation, vehicle_traces=traces[:max_traces])
 
 
+def status_label(status: str) -> tuple[str, str]:
+    """Short label and tone for an algorithm status string."""
+    return STATUS_LABELS.get(status, (status, "neutral"))
+
+
+def chart(fig: Any) -> None:
+    """Render a Plotly figure with the dashboard theme (not Streamlit's)."""
+    st.plotly_chart(
+        fig, width="stretch", theme=None, config={"displaylogo": False, "displayModeBar": False}
+    )
+
+
+def ledger_html(results: list[AlgorithmResult]) -> str:
+    """Comparison ledger for a list of algorithm results."""
+    rows = []
+    for result in sorted(
+        results, key=lambda r: ("uncoordinated", "greedy", "csp").index(r.algorithm)
+    ):
+        label, tone = status_label(result.status)
+        rows.append(
+            ui.LedgerRow(
+                algorithm=result.algorithm,
+                status=label,
+                tone=tone,
+                waiting_s=result.simulation.total_waiting_time,
+                stops=result.simulation.total_stops,
+                objective=result.simulation.objective,
+            )
+        )
+    return ui.ledger(rows)
+
+
+def run_comparison(config: ScenarioConfig) -> None:
+    """Run all three algorithms on ``config`` and store the bundle."""
+    with st.spinner("Simulating demand and searching the offset space..."):
+        bundle = run_all_algorithms(
+            config,
+            time_budget_s=float(st.session_state["csp_budget"]),
+            evaluation_cap=(
+                int(st.session_state["eval_cap"]) if st.session_state["cap_enabled"] else None
+            ),
+            verify_exhaustive=bool(st.session_state["verify_flag"]),
+        )
+    st.session_state[BUNDLE_KEY] = bundle
+    st.session_state.pop(SINGLE_RUN_KEY, None)
+    st.rerun()
+
+
+def need_valid_config() -> None:
+    """Shared notice for tabs that cannot render without a valid scenario."""
+    st.html(
+        ui.empty_state(
+            "The scenario is not valid",
+            "Fix the highlighted sidebar inputs; every tab comes back once it validates.",
+        )
+    )
+
+
 def tab_overview(config: ScenarioConfig | None, error: str | None) -> None:
-    """Render the KPI overview tab."""
-    st.subheader("Scenario summary")
+    """Render the scenario overview and the latest comparison."""
     if error or config is None:
         st.error(error)
-        st.caption("Fix the sidebar inputs; every tab becomes active once the scenario validates.")
+        need_valid_config()
         return
     warning = scenario_warning(config)
     if warning:
-        st.info(warning)
+        st.warning(warning)
     bundle = current_bundle(config)
-    left, mid, right = st.columns(3)
-    with left:
-        st.metric("Intersections", config.n_intersections)
-        st.metric("Cycle length C", f"{config.cycle_length:.0f} s")
-        st.metric("Coordinated green G", f"{config.green_duration:.0f} s")
-    with mid:
-        st.metric("Offsets per signal |D|", config.offsets_per_intersection)
-        st.metric("Raw search space", f"{config.search_space_size:,}")
-        st.metric(
-            "Vehicles (all directions)",
-            len(config.directions) * config.vehicles_per_direction,
-        )
-    with right:
-        st.metric(
-            "Progression constraint",
-            f"±{config.progression_tolerance_s:.0f} s"
-            if config.progression_tolerance_s is not None
-            else "disabled",
-        )
-        st.metric(
-            "Objective",
-            f"{config.objective_weight_wait:g}·W + {config.objective_weight_stop:g}·S",
-        )
-        st.metric("Seed", config.seed)
 
-    st.subheader("Last run")
+    travel_s = config.link_distance_m / (config.speed_kmh / 3.6)
+    domain = config.offsets_per_intersection
+    hero = ui.hero_stat(
+        "Raw search space",
+        f"{config.search_space_size:,}",
+        "plans",
+        f"<code>|D|^(N-1) = {domain}^{config.n_intersections - 1}</code> offset "
+        f"combinations, with O<sub>1</sub> = 0 fixed as the time reference. "
+        f"A vehicle at nominal speed needs about {travel_s:.0f} s per link.",
+    )
+    tolerance = (
+        f"±{config.progression_tolerance_s:g} s"
+        if config.progression_tolerance_s is not None
+        else "off"
+    )
+    spec = ui.spec_sheet(
+        [
+            ("Intersections", f"{config.n_intersections}"),
+            ("Offsets per signal", f"{domain}"),
+            ("Cycle C", f"{config.cycle_length:g} s"),
+            ("Green G", f"{config.green_duration:g} s"),
+            ("Link distance", f"{config.link_distance_m:g} m"),
+            ("Nominal speed", f"{config.speed_kmh:g} km/h"),
+            ("Vehicles", f"{len(config.directions) * config.vehicles_per_direction}"),
+            ("Progression", tolerance),
+            (
+                "Objective",
+                f"{config.objective_weight_wait:g}·W + {config.objective_weight_stop:g}·S",
+            ),
+            ("Seed", f"{config.seed}"),
+        ]
+    )
+    st.html(ui.overview_block(hero, spec))
+
     if bundle is None:
-        st.info(NO_RUN_MSG)
+        st.html(ui.section_title("Last run", "01"))
+        st.html(ui.empty_state(NO_RUN_TITLE, NO_RUN_BODY))
+        if st.button("Run all algorithms", type="primary", key="overview_run"):
+            run_comparison(config)
     else:
-        st.metric("CSP status", bundle.csp.status)
-        df = results_dataframe(bundle.results)
-        st.dataframe(
-            df[["algorithm", "status", "total_waiting_time_s", "total_stops", "objective"]],
-            hide_index=True,
-            width="stretch",
+        label, _tone = status_label(bundle.csp.status)
+        st.html(ui.section_title("Last run", "01", f"CSP {label}"))
+        st.html(ledger_html(bundle.results))
+    st.html(
+        ui.footer(
+            "Simulated under the documented model: constant speed, no queues",
+            f"traffic-coordination v{__version__}",
         )
-    st.caption(
-        "All numbers are simulated under the documented model (constant speed, "
-        "no queues) — they are neither field measurements nor the report's "
-        "illustrative figures."
     )
 
 
 def tab_corridor(config: ScenarioConfig | None, error: str | None) -> None:
     """Render the live corridor diagram and vehicle animation."""
     if error or config is None:
-        st.info("Fix the sidebar inputs first.")
+        need_valid_config()
         return
     corridor, _ = make_scenario(config)
     bundle = current_bundle(config)
     max_traces = 200
 
     if bundle is None:
-        st.info(
-            "Showing the uncoordinated reference plan (all offsets 0). Run an "
-            "algorithm to see the optimised plan and live traffic."
+        st.html(
+            ui.callout(
+                "Showing the <b>uncoordinated reference plan</b> (all offsets 0). Run the "
+                "comparison to see the optimised plan with live traffic.",
+            )
         )
         empty = SimulationResult(
             plan=timing_plan([0.0] * config.n_intersections),
@@ -413,6 +501,7 @@ def tab_corridor(config: ScenarioConfig | None, error: str | None) -> None:
         simulation = trimmed_simulation(bundle.csp.simulation, max_traces)
         offsets = tuple(bundle.csp.plan.offsets)
 
+    st.html(ui.section_title("Corridor snapshot", "01", "Scrub time to move the vehicles"))
     time_s = st.slider(
         "View time t (s)",
         0.0,
@@ -421,34 +510,38 @@ def tab_corridor(config: ScenarioConfig | None, error: str | None) -> None:
         1.0,
         key="corridor_time",
     )
-    st.plotly_chart(
-        corridor_figure(corridor, config, offsets, simulation, time_s),
-        width="stretch",
-    )
+    chart(corridor_figure(corridor, config, offsets, simulation, time_s))
     if bundle is not None:
-        st.caption(
-            "Animation note: with very large demands the first 200 vehicle "
-            "traces are drawn; reported metrics always use every vehicle."
+        st.html(
+            ui.section_title(
+                "Vehicle replay", "02", "Steel = forward, amber = reverse; first 100 vehicles"
+            )
         )
-        st.plotly_chart(
+        chart(
             vehicle_animation_figure(
                 corridor,
                 config,
                 offsets,
                 trimmed_simulation(bundle.csp.simulation, 100),
                 frames=48,
-            ),
-            width="stretch",
+            )
+        )
+        st.caption(
+            "With very large demand only the first 200 vehicle traces are drawn; "
+            "reported metrics always use every vehicle."
         )
 
 
 def tab_timeline(config: ScenarioConfig | None, error: str | None) -> None:
     """Render the signal-offset timeline."""
     if error or config is None:
-        st.info("Fix the sidebar inputs first.")
+        need_valid_config()
         return
     bundle = current_bundle(config)
     offsets = tuple(bundle.csp.plan.offsets) if bundle else (0.0,) * config.n_intersections
+    plan = "CSP plan" if bundle else "Uncoordinated reference plan"
+    st.html(ui.section_title("Signal timeline", "01", plan))
+    st.html(ui.offset_strip(offsets))
     horizon = st.slider(
         "Timeline horizon (s)",
         float(config.cycle_length),
@@ -456,90 +549,61 @@ def tab_timeline(config: ScenarioConfig | None, error: str | None) -> None:
         float(4 * config.cycle_length),
         key="timeline_horizon",
     )
-    st.plotly_chart(
-        signal_timeline_figure(offsets, config, horizon), width="stretch"
-    )
+    chart(signal_timeline_figure(offsets, config, horizon))
     st.caption(
-        "Green window of intersection i starts at its offset O_i, lasts G "
-        "seconds and repeats every C seconds; coordination shifts each row."
+        "The green window of intersection i starts at its offset O_i, lasts G seconds "
+        "and repeats every C seconds. Coordination shifts each row."
     )
-    if bundle is None:
-        st.caption("Showing the uncoordinated reference plan (all offsets 0).")
-    else:
-        st.dataframe(
-            pd.DataFrame(
-                {
-                    "intersection": [f"I{i + 1}" for i in range(config.n_intersections)],
-                    "offset_s": list(offsets),
-                }
-            ),
-            hide_index=True,
-        )
 
 
 def tab_algorithms(config: ScenarioConfig | None, error: str | None) -> None:
     """Render the run controls and single-run buttons."""
     if error or config is None:
-        st.info("Fix the sidebar inputs first.")
+        need_valid_config()
         return
-    st.subheader("Run the three coordination strategies")
-    st.caption(
-        f"All algorithms evaluate the same generated vehicle set "
-        f"({len(config.directions) * config.vehicles_per_direction} vehicles) "
-        "with the same deterministic simulator."
+    vehicles = len(config.directions) * config.vehicles_per_direction
+    st.html(
+        ui.section_title(
+            "Run the comparison", "01", f"Same {vehicles} vehicles, same deterministic simulator"
+        )
     )
-    run_col, cancel_space = st.columns([1, 2])
-    with run_col:
-        if st.button("▶ Run all algorithms", type="primary"):
-            with st.spinner("Simulating demand and searching the offset space…"):
-                bundle = run_all_algorithms(
-                    config,
-                    time_budget_s=float(st.session_state["csp_budget"]),
-                    evaluation_cap=(
-                        int(st.session_state["eval_cap"])
-                        if st.session_state["cap_enabled"]
-                        else None
-                    ),
-                    verify_exhaustive=bool(st.session_state["verify_flag"]),
-                )
-            st.session_state[BUNDLE_KEY] = bundle
-            st.session_state.pop(SINGLE_RUN_KEY, None)
-            st.rerun()
+    if st.button("Run all algorithms", type="primary", key="algorithms_run"):
+        run_comparison(config)
 
     warning = scenario_warning(config)
     if warning:
-        st.info(warning)
+        st.warning(warning)
 
-    st.divider()
-    st.subheader("Single runs (cached per scenario + budget)")
-    col1, col2, col3 = st.columns(3)
+    st.html(ui.section_title("Single runs", "02", "Cached per scenario and budget"))
+    col1, col2, col3, _spacer = st.columns([1, 1, 1, 3])
     budget = float(st.session_state["csp_budget"])
     with col1:
-        if st.button("Uncoordinated"):
+        if st.button("Uncoordinated", width="stretch"):
             st.session_state[SINGLE_RUN_KEY] = cached_run(config, "uncoordinated", budget, None)
     with col2:
-        if st.button("Greedy"):
+        if st.button("Greedy", width="stretch"):
             st.session_state[SINGLE_RUN_KEY] = cached_run(config, "greedy", budget, None)
     with col3:
-        if st.button("CSP"):
+        if st.button("CSP", width="stretch"):
             st.session_state[SINGLE_RUN_KEY] = cached_run(config, "csp", budget, None)
     single = st.session_state.get(SINGLE_RUN_KEY)
     if isinstance(single, AlgorithmResult):
-        status_icon = "✅" if single.status != STATUS_NO_SOLUTION else "⚠️"
-        st.write(f"{status_icon} **{single.algorithm}** — {single.status}")
-        st.dataframe(results_dataframe([single]), hide_index=True, width="stretch")
+        st.html(ledger_html([single]))
+        with st.expander("All counters for this run"):
+            st.dataframe(results_dataframe([single]), hide_index=True, width="stretch")
 
-    st.divider()
-    st.subheader("Benchmark suite")
-    st.caption(
-        "Re-runs scenarios A–E exactly as the repository's benchmark runner does "
-        "(uncoordinated, greedy, CSP + exhaustive verification where the space "
-        "allows). This blocks the UI for roughly a minute on a laptop; the CLI "
-        "`python -m traffic_coordination.experiments.benchmark_runner --all` is "
-        "the recommended way."
+    st.html(ui.section_title("Benchmark suite", "03", "Scenarios A to E"))
+    st.html(
+        ui.callout(
+            "Re-runs scenarios A to E exactly as the repository's benchmark runner does, "
+            "including exhaustive verification where the space allows. It blocks the page "
+            "for about a minute; the CLI <code>python -m "
+            "traffic_coordination.experiments.benchmark_runner --all</code> is the "
+            "recommended route."
+        )
     )
-    if st.button("Run benchmark scenarios A–E now"):
-        with st.spinner("Running benchmark scenarios A–E…"):
+    if st.button("Run benchmark scenarios A to E"):
+        with st.spinner("Running benchmark scenarios A to E..."):
             import traffic_coordination.experiments.benchmark_runner as runner
 
             frame, _meta = runner.run_suite(runner.MAIN_SCENARIOS)
@@ -548,143 +612,170 @@ def tab_algorithms(config: ScenarioConfig | None, error: str | None) -> None:
         st.dataframe(st.session_state[BENCHMARK_KEY], width="stretch")
 
 
+def verification_html(bundle: RunBundle) -> str:
+    """Statement about the independent exhaustive check of the CSP optimum."""
+    ver = bundle.verification
+    if ver is not None:
+        if ver.completed and ver.best_offsets is not None:
+            if abs(ver.best_objective - bundle.csp.simulation.objective) < 1e-9:
+                return ui.callout(
+                    f"<b>Verified.</b> An independent exhaustive search over "
+                    f"{ver.feasible_plans:,} feasible plans finds the same optimum, "
+                    f"J = {ver.best_objective:,.2f}.",
+                    "ok",
+                )
+            return ui.callout(
+                "<b>Verification disagrees.</b> The exhaustive search found a better plan "
+                "than the CSP. That would be a correctness bug; please report it.",
+                "bad",
+            )
+        return ui.callout(
+            "<b>Not verified.</b> The exhaustive check did not finish within its 60 s "
+            "budget, so optimality is unconfirmed for this run.",
+            "warn",
+        )
+    if bundle.verification_skipped:
+        return ui.callout(f"<b>Verification skipped:</b> {bundle.verification_skipped}.")
+    return ui.callout("Exhaustive verification was switched off for this run.")
+
+
 def tab_results(config: ScenarioConfig | None, error: str | None) -> None:
-    """Render the comparison table, charts, verification and final plan."""
+    """Render the comparison headline, charts, verification and final plan."""
     if error or config is None:
-        st.info("Fix the sidebar inputs first.")
+        need_valid_config()
         return
     bundle = current_bundle(config)
     if bundle is None:
-        st.info(NO_RUN_MSG)
+        st.html(ui.empty_state(NO_RUN_TITLE, NO_RUN_BODY))
         return
     df = results_dataframe(bundle.results)
-    st.subheader("Comparison")
-    st.dataframe(df, hide_index=True, width="stretch")
 
     if bundle.csp.status == STATUS_NO_SOLUTION:
-        st.error(
-            "The CSP found no feasible plan under the current hard constraints "
-            "(try increasing the progression tolerance)."
+        st.html(
+            ui.callout(
+                "<b>No feasible plan.</b> The CSP found no plan under the current hard "
+                "constraints. Try a wider progression tolerance.",
+                "bad",
+            )
         )
+        st.dataframe(df, hide_index=True, width="stretch")
         return
 
-    base_row = df.loc[df["algorithm"] == "uncoordinated", "objective"]
-    if not base_row.empty and float(base_row.iloc[0]) > 0:
-        best = float(df["objective"].min())
-        base = float(base_row.iloc[0])
-        improvement = (base - best) / base * 100
-        st.metric("Best objective improvement over uncoordinated", f"{improvement:.1f}%")
+    base = bundle.uncoordinated.simulation.objective
+    best = min(r.simulation.objective for r in bundle.results)
+    if base > 0:
+        left = ui.hero_stat(
+            "Objective reduction vs uncoordinated",
+            f"{(base - best) / base * 100:.1f}",
+            "%",
+            f"J falls from {base:,.0f} to {best:,.0f}.",
+        )
+    else:
+        left = ui.hero_stat("Best objective", f"{best:,.0f}", "J", "Uncoordinated J is zero.")
+    st.html(ui.headline_block(left, verification_html(bundle)))
+
+    st.html(ui.section_title("Comparison", "01"))
+    st.html(ledger_html(bundle.results))
 
     waiting_chart = px.bar(
-        df, x="algorithm", y="total_waiting_time_s", color="algorithm",
-        title="Total waiting time (s) — lower is better",
+        df,
+        x="algorithm",
+        y="total_waiting_time_s",
+        color="algorithm",
+        color_discrete_map=ALGORITHM_COLORS,
     )
     stops_chart = px.bar(
-        df, x="algorithm", y="total_stops", color="algorithm",
-        title="Total stops — fewer is better",
+        df, x="algorithm", y="total_stops", color="algorithm", color_discrete_map=ALGORITHM_COLORS
     )
-    chart_left, chart_right = st.columns(2)
+    for fig, title, y_title in (
+        (waiting_chart, "Total waiting time", "seconds"),
+        (stops_chart, "Total stops", "stops"),
+    ):
+        style_figure(fig, title=title, showlegend=False, height=340, bargap=0.45)
+        fig.update_traces(marker_line_width=0)
+        fig.update_xaxes(title=None)
+        fig.update_yaxes(title=y_title)
+    chart_left, chart_right = st.columns(2, gap="large")
     with chart_left:
-        st.plotly_chart(waiting_chart, width="stretch")
+        chart(waiting_chart)
     with chart_right:
-        st.plotly_chart(stops_chart, width="stretch")
+        chart(stops_chart)
 
-    if bundle.verification is not None:
-        ver = bundle.verification
-        if ver.completed and ver.best_offsets is not None:
-            agrees = abs(ver.best_objective - bundle.csp.simulation.objective) < 1e-9
-            if agrees:
-                st.success(
-                    f"Independent exhaustive search over {ver.feasible_plans:,} feasible "
-                    f"plans confirms the CSP optimum (J = {ver.best_objective:.2f})."
-                )
-            else:
-                st.error(
-                    "Independent verification found a better plan than the CSP — this "
-                    "would be a correctness bug; please report it."
-                )
-        else:
-            st.warning(
-                "Exhaustive verification did not finish within its 60 s budget; "
-                "optimality is not verified for this run."
-            )
-    elif bundle.verification_skipped:
-        st.info(f"Optimality verification: {bundle.verification_skipped}.")
-
-    st.subheader("Selected timing plan (CSP)")
-    st.dataframe(
-        pd.DataFrame(
-            {
-                "intersection": [f"I{i + 1}" for i in range(config.n_intersections)],
-                "offset_s": list(bundle.csp.plan.offsets),
-            }
-        ),
-        hide_index=True,
-    )
+    st.html(ui.section_title("Selected timing plan", "02", "CSP offsets per intersection"))
+    st.html(ui.offset_strip(bundle.csp.plan.offsets))
     if bundle.csp.status != FEASIBLE_OPTIMAL:
         st.caption(
-            f"CSP status: {bundle.csp.status} — the plan is best-so-far, not proven optimal."
+            f"CSP status: {bundle.csp.status}. This plan is the best found so far, "
+            "not a proven optimum."
         )
+    with st.expander("Full comparison table"):
+        st.dataframe(df, hide_index=True, width="stretch")
 
 
 def tab_search_inspector(config: ScenarioConfig | None, error: str | None) -> None:
     """Render CSP search statistics, trace charts and the event table."""
     if error or config is None:
-        st.info("Fix the sidebar inputs first.")
+        need_valid_config()
         return
     bundle = current_bundle(config)
     if bundle is None:
-        st.info("Run the CSP algorithm first (Algorithms tab).")
+        st.html(
+            ui.empty_state(
+                "Nothing to inspect yet",
+                "Run the comparison first. The inspector shows the CSP's counters and "
+                "the recorded window of its search trace.",
+            )
+        )
         return
     stats = bundle.csp.metadata["search_stats"]
-    st.subheader("CSP search statistics")
-    st.dataframe(
-        pd.DataFrame(
-            [(str(k), str(v)) for k, v in stats.items()],
-            columns=["statistic", "value"],
-        ).set_index("statistic"),
-        width="stretch",
-    )
-    chart_left, chart_right = st.columns(2)
+
+    def fmt(value: object) -> str:
+        if isinstance(value, bool):
+            return "yes" if value else "no"
+        if isinstance(value, int):
+            return f"{value:,}"
+        if isinstance(value, float):
+            return f"{value:,.4g}"
+        return str(value)
+
+    st.html(ui.section_title("Search statistics", "01", "Counters cover the whole search"))
+    st.html(ui.kv_grid([(str(k).replace("_", " "), fmt(v)) for k, v in stats.items()]))
+    chart_left, chart_right = st.columns(2, gap="large")
     with chart_left:
-        st.plotly_chart(
-            traceviz.trace_event_summary_figure(bundle.csp_trace), width="stretch"
-        )
+        chart(traceviz.trace_event_summary_figure(bundle.csp_trace))
     with chart_right:
-        st.plotly_chart(
-            traceviz.trace_depth_figure(bundle.csp_trace), width="stretch"
+        chart(traceviz.trace_depth_figure(bundle.csp_trace))
+    st.html(
+        ui.section_title(
+            "Recorded events", "02", "The first events up to the trace cap, in order"
         )
-    st.subheader("Recorded events")
-    st.caption(
-        "The trace retains the first events of the search up to its cap, in "
-        "chronological order; the aggregate counters above cover the entire "
-        "search, not just the retained window."
     )
-    st.dataframe(
-        traceviz.trace_dataframe(bundle.csp_trace), width="stretch", height=420
-    )
+    st.dataframe(traceviz.trace_dataframe(bundle.csp_trace), width="stretch", height=420)
 
 
 def tab_sensitivity(config: ScenarioConfig | None, error: str | None) -> None:
     """Render one-dimensional sensitivity sweeps computed live."""
     if error or config is None:
-        st.info("Fix the sidebar inputs first.")
+        need_valid_config()
         return
-    st.subheader("Sensitivity analysis")
-    st.caption(
-        "Each sweep varies one axis at a time using the other sidebar settings. "
-        "Every value is a fresh run of all three algorithms on identical demand."
+    st.html(
+        ui.section_title(
+            "Sensitivity sweep",
+            "01",
+            "One axis at a time; each value reruns all three algorithms",
+        )
     )
-    axis = st.selectbox(
-        "Sweep axis",
-        [
-            "Traffic demand (vehicles per direction)",
-            "Nominal speed (km/h)",
-            "Corridor size (intersections)",
-            "Offset resolution (s)",
-        ],
-    )
-    quick = st.checkbox("Fast mode (5 s CSP budget, 30,000-plan cap)", value=True)
+    axis_col, values_col = st.columns([1, 2], gap="large")
+    with axis_col:
+        axis = st.selectbox(
+            "Sweep axis",
+            [
+                "Traffic demand (vehicles per direction)",
+                "Nominal speed (km/h)",
+                "Corridor size (intersections)",
+                "Offset resolution (s)",
+            ],
+        )
     options: list[float] = {
         "Traffic demand (vehicles per direction)": [5.0, 10.0, 20.0, 30.0, 50.0],
         "Nominal speed (km/h)": [25.0, 30.0, 40.0, 50.0, 60.0],
@@ -692,9 +783,11 @@ def tab_sensitivity(config: ScenarioConfig | None, error: str | None) -> None:
         "Offset resolution (s)": [1.0, 2.0, 5.0],
     }[axis]
     default = options[:4] if axis.startswith("Offset") else options
-    chosen = st.multiselect("Values", options, default=default)
+    with values_col:
+        chosen = st.multiselect("Values", options, default=default)
+    quick = st.checkbox("Fast mode (5 s CSP budget, 30,000-plan cap)", value=True)
     if not chosen:
-        st.info("Pick at least one value.")
+        st.html(ui.empty_state("No values selected", "Pick at least one value to sweep."))
         return
     if st.button("Run sweep", type="primary"):
         budget = 5.0 if quick else float(st.session_state["csp_budget"])
@@ -749,139 +842,183 @@ def tab_sensitivity(config: ScenarioConfig | None, error: str | None) -> None:
                     }
                 )
             progress.progress((idx + 1) / len(chosen))
+        progress.empty()
         st.session_state[SWEEP_KEY] = pd.DataFrame(rows)
 
     frame = st.session_state.get(SWEEP_KEY)
     if isinstance(frame, pd.DataFrame) and not frame.empty:
-        st.dataframe(frame, hide_index=True, width="stretch")
         fig = px.line(
             frame,
             x=frame["value"].astype(str),
             y="objective",
             color="algorithm",
             markers=True,
-            title=f"Objective vs {axis.lower()} "
-            f"(J = {config.objective_weight_wait:g}·W + {config.objective_weight_stop:g}·S)",
+            color_discrete_map=ALGORITHM_COLORS,
         )
+        style_figure(
+            fig,
+            title=f"Objective J = {config.objective_weight_wait:g}·W + "
+            f"{config.objective_weight_stop:g}·S",
+            height=400,
+        )
+        fig.update_traces(line_width=2, marker_size=7)
         fig.update_xaxes(title=axis)
-        st.plotly_chart(fig, width="stretch")
+        fig.update_layout(legend_title_text="")
+        chart(fig)
+        with st.expander("Sweep data"):
+            st.dataframe(frame, hide_index=True, width="stretch")
 
 
 def tab_export(config: ScenarioConfig | None, error: str | None) -> None:
     """Render export buttons for the current run's real data."""
     if error or config is None:
-        st.info("Fix the sidebar inputs first.")
+        need_valid_config()
         return
-    st.subheader("Export this session's run data")
+    st.html(ui.section_title("Export this session's run", "01", "Files hold the actual results"))
     bundle = current_bundle(config)
     if bundle is None:
-        st.info("Run a comparison first; exports contain the actual run results.")
+        st.html(
+            ui.empty_state(
+                "Nothing to export yet",
+                "Run the comparison first; every download contains that run's real data.",
+            )
+        )
         return
     import json
 
     df = results_dataframe(bundle.results)
-    st.download_button(
-        "Download comparison results (CSV)",
-        df.to_csv(index=False).encode("utf-8"),
-        file_name="coordination_results.csv",
-        mime="text/csv",
-    )
     plans = {
         result.algorithm: {"offsets": list(result.plan.offsets), "status": result.status}
         for result in bundle.results
     }
-    st.download_button(
-        "Download timing plans (JSON)",
-        json.dumps({"config": config.to_dict(), "plans": plans}, indent=2).encode("utf-8"),
-        file_name="timing_plans.json",
-        mime="application/json",
-    )
-    st.download_button(
-        "Download CSP search trace (JSON)",
-        json.dumps(
-            {"search_stats": bundle.csp.metadata["search_stats"], **bundle.csp_trace},
-            indent=2,
-            default=str,
-        ).encode("utf-8"),
-        file_name="search_trace.json",
-        mime="application/json",
-    )
     trace_frame = traceviz.trace_dataframe(bundle.csp_trace)
-    st.download_button(
-        "Download search-trace events (CSV)",
-        trace_frame.to_csv(index=False).encode("utf-8"),
-        file_name="search_trace.csv",
-        mime="text/csv",
-    )
+    downloads = [
+        (
+            "Comparison results",
+            "CSV",
+            df.to_csv(index=False).encode("utf-8"),
+            "coordination_results.csv",
+            "text/csv",
+        ),
+        (
+            "Timing plans",
+            "JSON",
+            json.dumps({"config": config.to_dict(), "plans": plans}, indent=2).encode("utf-8"),
+            "timing_plans.json",
+            "application/json",
+        ),
+        (
+            "CSP search trace",
+            "JSON",
+            json.dumps(
+                {"search_stats": bundle.csp.metadata["search_stats"], **bundle.csp_trace},
+                indent=2,
+                default=str,
+            ).encode("utf-8"),
+            "search_trace.json",
+            "application/json",
+        ),
+        (
+            "Search-trace events",
+            "CSV",
+            trace_frame.to_csv(index=False).encode("utf-8"),
+            "search_trace.csv",
+            "text/csv",
+        ),
+    ]
+    columns = st.columns(2, gap="medium")
+    for i, (label, kind, data, name, mime) in enumerate(downloads):
+        with columns[i % 2]:
+            st.download_button(
+                f"{label} · {kind}", data, file_name=name, mime=mime, width="stretch"
+            )
     st.caption("Benchmark result files live in `experiments/results/` in the repository.")
+
+
+LEARN_SECTIONS: list[tuple[str, str]] = [
+    (
+        "State space",
+        "<p>A <em>state</em> is a partial assignment of offsets <code>(O_1, ..., O_k)</code>; "
+        "a complete state is one timing plan. <code>O_1 = 0</code> is fixed as the global "
+        "time reference, so the space is <code>|D|^(N-1)</code>, e.g. 12<sup>4</sup> = "
+        "20,736 plans for N = 5, C = 60 s and a 5 s grid.</p>",
+    ),
+    (
+        "CSP formulation",
+        "<ul><li><b>Variables:</b> signal offsets <code>O_2..O_N</code>.</li>"
+        "<li><b>Domains:</b> the discrete grid <code>{0, r, 2r, ..., C-r}</code>.</li>"
+        "<li><b>Hard constraints:</b> domain bounds, the fixed reference offset and, "
+        "optionally, a progression tolerance between adjacent intersections.</li>"
+        "<li><b>Soft objective:</b> <code>J = α·W + β·S</code>, evaluated by deterministic "
+        "simulation.</li></ul>",
+    ),
+    (
+        "Forward checking",
+        "<p>After assigning <code>O_i</code>, the solver removes values from "
+        "<code>O_{i+1}</code>'s domain that violate the pairwise constraint. The constraint "
+        "graph is a chain, so one future neighbour is enough. With no progression constraint "
+        "forward checking removes nothing, and the dashboard says so; the ablation "
+        "(<code>use_forward_checking=False</code>) lives in the test suite.</p>",
+    ),
+    (
+        "Branch and bound",
+        "<p>The search keeps the best complete plan found so far (the incumbent). A subtree "
+        "is pruned only when a <em>valid lower bound</em> cannot beat it. The implemented "
+        "bound <code>h(s) = 0</code> is admissible and consistent but weak: it prunes "
+        "nothing in practice, and the <code>branch_bound_prunes</code> counter reports the "
+        "real, usually zero, value.</p>",
+    ),
+    (
+        "Objective function",
+        "<p><code>J = α·W + β·S</code>, where W is total waiting time in seconds and S the "
+        "number of stops. With the default α = 1 and β = 2, one stop costs as much as two "
+        "seconds of delay. Change the weights in the sidebar to move the trade-off.</p>",
+    ),
+    (
+        "Search-space growth",
+        "<p>Each extra intersection multiplies the space by |D|, which is 12 on the default "
+        "grid. That is the curve behind the scalability chart in the report.</p>",
+    ),
+    (
+        "Simulation limits",
+        "<p>Constant speed, no acceleration profiles, no queue interactions or capacity "
+        "limits, one coordinated green per signal, no pedestrians or turns. It is good for "
+        "demonstrating classical AI search on a synthetic arterial and is <b>not</b> a "
+        "traffic-engineering design tool.</p>",
+    ),
+]
 
 
 def tab_learn() -> None:
     """Render the educational explanations used during the viva."""
-    st.header("How this works — viva-ready explanations")
-    st.markdown(
-        "### 1. State space\n"
-        "A *state* is a partial assignment of offsets `(O_1, ..., O_k)`; a complete "
-        "state is one timing plan. `O_1 = 0` is fixed as the global time "
-        "reference, so the space is `|D|^(N-1)` — e.g. 12^4 = 20,736 plans for "
-        "N=5, C=60 s, a 5 s grid."
-    )
-    st.markdown(
-        "### 2. CSP formulation\n"
-        "- **Variables:** signal offsets `O_2..O_N`.\n"
-        "- **Domains:** the discrete grid `{0, r, 2r, ..., C-r}`.\n"
-        "- **Hard constraints:** domain bounds, the fixed reference offset and "
-        "(optionally) a progression tolerance between adjacent intersections.\n"
-        "- **Soft objective:** `J = α·W + β·S`, evaluated by deterministic simulation."
-    )
-    st.markdown(
-        "### 3. Forward checking\n"
-        "After assigning `O_i`, the solver removes values from `O_{i+1}`'s domain "
-        "that violate the pairwise constraint. The constraint graph is a chain, so "
-        "one future neighbour suffices. With no progression constraint configured, "
-        "forward checking removes nothing — stated honestly — and the ablation "
-        "(`use_forward_checking=False`) is available in the test suite."
-    )
-    st.markdown(
-        "### 4. Branch and bound\n"
-        "The search keeps the best complete plan (the incumbent). A subtree is "
-        "pruned only when a *valid lower bound* cannot beat the incumbent. The "
-        "implemented bound `h(s) = 0` is admissible and consistent but weak — it "
-        "prunes nothing in practice, and the `branch_bound_prunes` counter reports "
-        "the real (usually zero) value instead of an inflated figure."
-    )
-    st.markdown(
-        "### 5. Objective function\n"
-        "`J = α·W + β·S`: W is total waiting time in seconds and S the stop count. "
-        "With the default α=1, β=2, one stop costs like two seconds of delay. "
-        "Change the weights in the sidebar to see the trade-off shift."
-    )
-    st.markdown(
-        "### 6. Search-space growth\n"
-        "Adding one intersection multiplies the space by |D| (12 on the default "
-        "grid) — the curved growth behind the scalability chart in the report."
-    )
-    st.markdown(
-        "### 7. Simulation limitations\n"
-        "Constant speed, no acceleration profiles, no queue interactions or "
-        "capacity limits, one coordinated green per signal, no pedestrians or "
-        "turns. Good for demonstrating classical AI search on a synthetic "
-        "arterial; **not** a traffic-engineering design tool."
-    )
+    st.html(ui.section_title("How it works", None, "Seven ideas behind the dashboard"))
+    st.html(ui.prose_sections(LEARN_SECTIONS))
 
 
 def main() -> None:
     """Compose the dashboard page."""
     seed_default_state()
-    st.markdown(CSS, unsafe_allow_html=True)
-    st.title("🚦 Classical AI-Based Traffic Signal Coordination")
-    st.caption(
-        "ECSCT24301 · Foundation of AI · Adani University — educational "
-        "simulation and decision-support prototype. Not a certified "
-        "traffic-control system, not field validated."
-    )
+    st.markdown(ui.GLOBAL_CSS, unsafe_allow_html=True)
 
     config, error = render_sidebar()
+
+    eyebrow = "ECSCT24301 · Foundation of AI · Adani University"
+    bundle = current_bundle_quiet(config)
+    if config is None:
+        st.html(ui.masthead(None, 0.0, 0.0, "", eyebrow))
+    else:
+        offsets = (
+            tuple(bundle.csp.plan.offsets) if bundle else (0.0,) * config.n_intersections
+        )
+        st.html(
+            ui.masthead(
+                offsets,
+                config.cycle_length,
+                config.green_duration,
+                "CSP plan" if bundle else "Reference plan",
+                eyebrow,
+            )
+        )
 
     overview, corridor, timeline, algorithms, results, inspector, sensitivity, export, learn = (
         st.tabs(

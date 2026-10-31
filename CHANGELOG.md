@@ -5,6 +5,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- Dashboard redesign: dark theme, Geist type, one accent colour, a masthead that runs the
+  current timing plan, a comparison ledger, and composed empty and error states.
+- Minimum Streamlit version raised to 1.50 for the theming APIs.
+
+### Fixed
+- Invalid-scenario message no longer repeats "Invalid scenario configuration".
+
 ### Removed
 - GitHub Actions workflow. Lint and tests now run locally before every push.
 

@@ -200,8 +200,8 @@ def build() -> Presentation:
     # 8. Dashboard tour (screenshot)
     add_picture_slide(
         deck, "Dashboard — nine tabs, live-verified",
-        "docs/screenshots/01_overview_last_run.png",
-        "Live session: CSP proven optimal, 83.7% improvement banner, verification alert over 256 feasible plans (J = 618.00).",
+        "docs/screenshots/05_results_comparison.png",
+        "Live session: 83.7% objective reduction, CSP proven optimal and verified over 256 feasible plans (J = 618.00).",
     )
     _notes_last(deck, (
         "Demo flow: load scenario B, run all algorithms, show the banner; the corridor tab animates platoons "

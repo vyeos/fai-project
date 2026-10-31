@@ -166,11 +166,12 @@ div[data-testid="stAlert"]:has([data-testid="stAlertContentError"]) [data-testid
 }}
 [data-testid="stExpander"] summary p {{ color: var(--muted); font-size: 0.86rem; }}
 [data-testid="stSlider"] [data-testid="stTickBar"] {{ font-family: var(--mono); }}
-[data-baseweb="tag"] {{
+/* multiselect value chips (data-tag in Streamlit >= 1.5x, BaseWeb tag before) */
+[data-tag], [data-baseweb="tag"] {{
   background: var(--surface-2) !important; border: 1px solid var(--line);
 }}
-[data-baseweb="tag"] span {{ color: var(--text) !important; font-family: var(--mono); font-size: 0.78rem; }}
-[data-baseweb="tag"] svg {{ fill: var(--faint) !important; }}
+[data-tag] span, [data-baseweb="tag"] span {{ color: var(--text) !important; font-family: var(--mono); font-size: 0.78rem; }}
+[data-tag] button, [data-baseweb="tag"] svg {{ color: var(--faint) !important; fill: var(--faint) !important; }}
 
 /* ---- shared building blocks ----------------------------------------- */
 .tc-eyebrow {{

@@ -29,11 +29,11 @@ enough.
 > incomplete experiments (e.g. exhaustive verification of very large spaces)
 > are recorded as such rather than faked.
 
-## Screenshots (captured from a live session, scenario B defaults)
+## Screenshots (captured from a live session, dashboard defaults: N = 5, ±10 s tolerance)
 
 | | |
 |---|---|
-| ![Overview KPIs](docs/screenshots/01_overview_last_run.png) | ![Corridor t=57 s](docs/screenshots/03_corridor_t57_vehicles.png) |
+| ![Overview and last run](docs/screenshots/01_overview_last_run.png) | ![Corridor t=57 s](docs/screenshots/03_corridor_t57_vehicles.png) |
 | ![Signal timeline](docs/screenshots/04_signals_timeline.png) | ![Results + verification](docs/screenshots/05b_results_verification_plan.png) |
 | ![Search trace](docs/screenshots/06b_search_trace_charts.png) | ![Sensitivity sweep](docs/screenshots/07_sensitivity_sweep.png) |
 

@@ -6,9 +6,9 @@
 
 ```
 traffic-signal-coordination/
-├── app.py                          # Streamlit dashboard (9 tabs)
+├── app.py                          # Streamlit entry: top navigation over four pages
 ├── pyproject.toml                  # packaging, ruff and pytest configuration
-├── .streamlit/config.toml          # dark theme, Geist fonts, minimal toolbar
+├── .streamlit/config.toml          # light theme, IBM Plex fonts, minimal toolbar
 ├── src/traffic_coordination/
 │   ├── models.py                   # Intersection, Link, Vehicle, TimingPlan, SimulationResult
 │   ├── config.py                   # ScenarioConfig validation, DEMAND_PRESETS
@@ -21,14 +21,15 @@ traffic-signal-coordination/
 │   │   ├── uncoordinated.py        # baseline: all offsets 0
 │   │   ├── greedy.py               # baseline: offset = previous + travel time (mod C)
 │   │   └── csp_optimizer.py        # backtracking + forward checking + branch & bound
-│   ├── visualization/              # plotly figure builders (corridor, timeline, animation, traces)
+│   ├── visualization/              # plotly figure builders (time-space, corridor, timeline, traces)
 │   ├── experiments/
 │   │   ├── scenarios.py            # registered benchmark scenarios A–E and F/G/H/J
 │   │   ├── benchmark_runner.py     # CLI: python -m traffic_coordination.experiments.benchmark_runner
 │   │   └── reporting.py            # CSV/JSON/markdown summary writers
+│   ├── dashboard/                  # the four pages + shared road state (common.py)
 │   ├── ui_state.py                 # dashboard run-state helpers (RunBundle, run cache)
-│   └── ui_theme.py                 # dashboard CSS and HTML builders (masthead, ledger…)
-├── tests/                          # 81 pytest tests (unit + integration)
+│   └── ui_theme.py                 # design system: CSS tokens and HTML components
+├── tests/                          # 86 pytest tests (unit + integration)
 ├── experiments/results/            # measured benchmark outputs (CSV, JSON, summary.md)
 ├── experiments/figures/            # 7 generated matplotlib figures (fig1–3, fig5–8)
 └── docs/                           # this documentation + screenshots/
@@ -128,37 +129,48 @@ ScenarioConfig ──> make_scenario ──> (corridor, vehicles)
 
 ## 6. Dashboard design
 
-`app.py` renders nine tabs driven by one sidebar `ScenarioConfig`:
+`app.py` registers four pages with `st.navigation(position="top")`. There is
+no sidebar: the only inputs are the road form on the first page, stored as a
+plain-language `road` dict in session state and translated to a
+`ScenarioConfig` by `dashboard/common.road_to_config`. Every page reads the
+latest `RunBundle`; a first visit runs the default road (scenario B) so no
+page is ever empty.
 
-1. **Overview** — search-space figure, scenario spec sheet, last-run ledger.
-2. **Corridor** — corridor diagram at time t (slider) + vehicle animation.
-3. **Signals** — green-window Gantt over a horizon slider.
-4. **Algorithms** — run all / single runs (cached per scenario+budget) /
-   benchmark suite runner.
-5. **Results** — objective reduction, verification statement, ledger,
-   charts, final plan.
-6. **Search inspector** — CSPSearchStats grid, trace summary + depth charts,
-   event table (trace retains the first events up to its cap).
-7. **Sensitivity** — one-axis sweeps with a fast mode and an evaluation cap;
-   values exceeding the cap are skipped with a visible warning.
-8. **Export** — CSV/JSON downloads of the current session's real run data.
-9. **Learn** — viva-ready explanations (state space, CSP, FC, BB, objective,
-   growth, limitations).
+1. **Try it** (`dashboard/try_it.py`) — road form (lights, distance, speed,
+   traffic preset, directions, arrival pattern; cycle, green, timing step,
+   green-wave rule and stop cost in an optional section), a one-sentence
+   result, per-car stats against no coordination, the plan as animated
+   lights and a table, side-by-side time-space diagrams, and the three
+   strategies as cards.
+2. **How it works** (`dashboard/how_it_works.py`) — the problem, a glossary,
+   the simulator's rules, the strategies (greedy worked through on the
+   reader's road), the CSP formulation and search techniques, a corridor
+   snapshot with a time slider, and the model's limits.
+3. **Experiments** (`dashboard/experiments.py`) — saved A–E results from
+   `experiments/results/benchmark_results.csv` and a live one-factor sweep
+   (5 s budget, 30,000-plan cap per value; over-cap values are skipped with
+   a notice).
+4. **Under the hood** (`dashboard/under_the_hood.py`) — brute-force
+   verification, every search counter with an explanation, trace charts and
+   the recorded steps, CSV/JSON downloads, and the full settings.
 
-**Visual system.** A dark "control room" palette: cool off-black surfaces,
-hairline dividers instead of boxed cards, Geist for text and Geist Mono for
-every number. Signal amber is the single accent and marks the CSP; green and
-red appear only for real signal states. The palette lives in
-`visualization/__init__.py` and is shared by `ui_theme.py`, the Plotly figures
-and `.streamlit/config.toml`. The masthead runs the current timing plan as a
-row of animated signal heads; `tests/test_ui_theme.py` checks that each lamp is
-green exactly when `is_green` says so. Custom blocks render through `st.html`,
-whose sanitizer strips inline SVG, so the signal row and icons are embedded as
-SVG images.
+**Design system.** One set of tokens in `visualization/__init__.py` drives
+`.streamlit/config.toml`, the stylesheet in `ui_theme.py` and every Plotly
+figure: a warm light page, white cards with hairline borders, IBM Plex Sans,
+and a single accent blue that always means "the optimized plan". Green and
+red appear only for signal states; vehicle directions are teal and rust;
+strategies step from light grey (no coordination) to slate (greedy) to the
+accent. `ui_theme.py` exposes a small component set (page header, section,
+summary, stat grid, strategy cards, table, glossary terms, numbered steps,
+callout, legend, animated signal row), each rendered through `st.html`.
+Because that sanitizer strips inline SVG, the signal row is embedded as an
+SVG image; `tests/test_ui_theme.py` checks each lamp is green exactly when
+`is_green` says so. All reader-facing wording uses one vocabulary (light,
+cycle, green time, offset, driving time, stop, waiting time, score).
 
-Honesty is first-class in the UI: budgets and caps are configurable, skipped
-verifications and incomplete statuses are shown verbatim, and every panel
-labels its numbers as simulated, not field-measured.
+Honesty is first-class in the UI: incomplete searches, skipped verifications
+and the weak branch-and-bound are stated in words, and every page labels its
+numbers as simulated, not measured on a street.
 
 ## 7. Known limitations
 

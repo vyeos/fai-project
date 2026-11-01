@@ -19,16 +19,30 @@ from . import (
 EVENT_COLORS = {
     "assign": COLOR_FORWARD,
     "reject": COLOR_RED,
-    "fc_remove": "#5f8f86",
+    "fc_remove": "#7aa59a",
     "dead_end": "#a0675f",
     "backtrack": COLOR_MUTED,
     "evaluate": COLOR_GREEN,
     "best": COLOR_ACCENT,
-    "prune_bb": "#c9cdd3",
+    "prune_bb": "#9aa0a8",
     "limit": COLOR_FAINT,
 }
 
+# Plain-language names for the event types the solver records.
+EVENT_LABELS = {
+    "assign": "Tried a value",
+    "reject": "Broke the timing rule",
+    "fc_remove": "Ruled out ahead",
+    "dead_end": "Dead end",
+    "backtrack": "Backtracked",
+    "evaluate": "Scored a full plan",
+    "best": "New best plan",
+    "prune_bb": "Skipped by bound",
+    "limit": "Stopped by limit",
+}
+
 __all__ = [
+    "EVENT_LABELS",
     "trace_dataframe",
     "trace_counts",
     "trace_depth_figure",
@@ -83,15 +97,19 @@ def trace_depth_figure(trace_dict: dict[str, object]) -> go.Figure:
     for event_type in color_map:
         matching = [e for e in events if e.get("type") == event_type]
         xs = [i for i, e in enumerate(events) if e.get("type") == event_type]
-        ys = [e.get("var", e.get("next_var", -1)) for e in matching]
+        # scored plans happen at full depth, after the last light is set
+        ys = [
+            e["var"] if "var" in e else len(e.get("offsets", ())) - 1 if "offsets" in e else -1
+            for e in matching
+        ]
         if xs:
             fig.add_trace(
                 go.Scatter(
                     x=xs,
-                    y=ys,
+                    y=[y + 1 for y in ys],
                     mode="markers",
                     marker=dict(size=5, color=color_map[event_type], opacity=0.9),
-                    name=event_type,
+                    name=EVENT_LABELS.get(event_type, event_type),
                     hovertemplate="%{customdata}<extra></extra>",
                     customdata=[str({k: v for k, v in e.items() if k != "type"}) for e in matching],
                 )
@@ -106,10 +124,10 @@ def trace_depth_figure(trace_dict: dict[str, object]) -> go.Figure:
             font=dict(color=COLOR_FAINT),
         )
     fig.layout.update(
-        base_layout(title="Events by variable touched", height=380)
+        base_layout(height=380, margin={"l": 72, "r": 16, "t": 64, "b": 52})
     )
-    fig.update_xaxes(title="Event index (chronological)")
-    fig.update_yaxes(title="Variable index", dtick=1)
+    fig.update_xaxes(title="Step of the search")
+    fig.update_yaxes(title="Light being timed", dtick=1, tickprefix="Light ")
     return fig
 
 
@@ -118,13 +136,13 @@ def trace_event_summary_figure(trace_dict: dict[str, object]) -> go.Figure:
     counts = trace_counts(trace_dict)
     fig = go.Figure(
         go.Bar(
-            x=list(counts.index),
+            x=[EVENT_LABELS.get(str(k), str(k)) for k in counts.index],
             y=counts.values,
             marker_color=[EVENT_COLORS.get(str(k), COLOR_FAINT) for k in counts.index],
             marker_line_width=0,
         )
     )
-    fig.layout.update(base_layout(title="Event counts (within event cap)", height=380))
-    fig.update_xaxes(title="Event type")
-    fig.update_yaxes(title="Count")
+    fig.layout.update(base_layout(height=380, margin={"l": 56, "r": 16, "t": 64, "b": 52}))
+    fig.update_xaxes(title=None)
+    fig.update_yaxes(title="Times recorded")
     return fig

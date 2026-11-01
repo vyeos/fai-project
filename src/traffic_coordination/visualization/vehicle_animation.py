@@ -133,12 +133,12 @@ def vehicle_animation_figure(
                 x=[positions[i]],
                 y=[6],
                 mode="markers+text",
-                text=[f"I{i + 1} (O={offset:.0f}s)"],
+                text=[f"Light {i + 1} (+{offset:g} s)"],
                 textposition="top center",
                 textfont=dict(family=FONT_MONO, size=11, color=COLOR_MUTED),
                 marker=dict(size=14, color=COLOR_LINE, line={"width": 3, "color": COLOR_BG}),
                 showlegend=False,
-                hovertemplate=f"I{i + 1} green at t=0: {state}<extra></extra>",
+                hovertemplate=f"Light {i + 1} at t=0: {state}<extra></extra>",
             )
         )
 

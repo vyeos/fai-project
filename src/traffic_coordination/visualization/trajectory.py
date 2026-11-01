@@ -4,7 +4,7 @@ A vehicle's x-position along the corridor at time ``t``:
 
 - before its first signal arrival it holds at the *approach point* 30 m
   upstream of its first signal;
-- while waiting at signal ``i`` it holds just before that signal's stop bar;
+- while waiting at signal ``i`` it holds at that signal's stop bar;
 - while travelling between signals ``i`` and ``j`` it interpolates linearly
   along ``[x_i, x_j]`` between the departure and arrival timestamps;
 - after the last signal it continues past it at nominal travel speed.
@@ -35,7 +35,9 @@ def vehicle_position_series(
     these piecewise-linear segments.
     """
     direction = trace.direction
-    visits = sorted(trace.arrival_at_intersection)  # intersection indices in visit order
+    # intersection indices in the order the vehicle reaches them (reverse
+    # vehicles visit N-1 first, so sorting by index alone would be wrong)
+    visits = sorted(trace.arrival_at_intersection, key=trace.arrival_at_intersection.__getitem__)
     if not visits:
         return [0.0], [0.0]
 
@@ -58,11 +60,7 @@ def vehicle_position_series(
             if prev_t < arrival:
                 points.append((arrival, prev_x))
         points.append((max(points[-1][0], arrival), positions[index]))
-        if wait > 0:
-            hold_x = positions[index] + (1 if direction == "forward" else -1) * -APPROACH_M / 2
-            points.append((departure, hold_x))
-        else:
-            points.append((departure, positions[index]))
+        points.append((departure, positions[index]))
         if order < len(visits) - 1:
             nxt = visits[order + 1]
             arr_next = trace.arrival_at_intersection[nxt]

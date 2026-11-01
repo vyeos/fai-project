@@ -1,44 +1,54 @@
 """Plotly-based visualizations for the coordination dashboard.
 
-Design tokens (dark "control room" palette, shared with ``ui_theme`` and
+Design tokens (light "field notebook" palette, shared with ``ui_theme`` and
 ``.streamlit/config.toml``):
 
-- surfaces: background ``#0c0e11``, raised ``#15181d``, hairlines ``#252a31``
-- text: primary ``#e4e6e9``, muted ``#8b929c``, faint ``#5c636d``
-- single accent (signal amber): ``#e2a340`` -- the CSP and reverse traffic
-- signal states only: go ``#4fb286``, stop ``#e0564f``
-- forward vehicles: steel ``#9db7d3``
+- surfaces: page ``#f6f6f2``, cards ``#ffffff``, hairlines ``#e2e2dc``
+- text: primary ``#17191c``, muted ``#565b63``, faint ``#8b9097``
+- one accent (optimizer blue) ``#2457d6``: the optimized plan, links, focus
+- signal states only: go ``#1e9a5a``, stop ``#d6433b``
+- vehicle directions: forward ``#2f6f8f`` (teal), reverse ``#c0682a`` (rust)
+- strategies recede from light grey (no coordination) to slate (greedy) to
+  the accent (optimized), so the eye lands on the optimizer first
 """
 
 from __future__ import annotations
 
-COLOR_BG = "#0c0e11"
-COLOR_SURFACE = "#15181d"
-COLOR_LINE = "#252a31"
-COLOR_GRID = "#1b1f25"
-COLOR_TEXT = "#e4e6e9"
-COLOR_MUTED = "#8b929c"
-COLOR_FAINT = "#5c636d"
-COLOR_ACCENT = "#e2a340"
-COLOR_GREEN = "#4fb286"
-COLOR_GREEN_FILL = "rgba(79, 178, 134, 0.78)"
-COLOR_RED = "#e0564f"
-COLOR_RED_FILL = "rgba(224, 86, 79, 0.16)"
-COLOR_FORWARD = "#9db7d3"
-COLOR_REVERSE = COLOR_ACCENT
-COLOR_ROAD = "#2a2f37"
-FONT = "Geist, ui-sans-serif, system-ui, sans-serif"
-FONT_MONO = "'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace"
+COLOR_BG = "#f6f6f2"
+COLOR_SURFACE = "#ffffff"
+COLOR_SUNKEN = "#efefea"
+COLOR_LINE = "#e2e2dc"
+COLOR_GRID = "#ebebe6"
+COLOR_TEXT = "#17191c"
+COLOR_MUTED = "#565b63"
+COLOR_FAINT = "#8b9097"
+COLOR_ACCENT = "#2457d6"
+COLOR_GREEN = "#1e9a5a"
+COLOR_GREEN_FILL = "rgba(30, 154, 90, 0.75)"
+COLOR_RED = "#d6433b"
+COLOR_RED_FILL = "rgba(214, 67, 59, 0.16)"
+COLOR_FORWARD = "#2f6f8f"
+COLOR_REVERSE = "#c0682a"
+COLOR_ROAD = "#d9d9d2"
+FONT = "'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif"
+FONT_MONO = "'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace"
 
-# Baselines recede into greys so the optimizer reads first.
 ALGORITHM_COLORS = {
-    "uncoordinated": "#596069",
-    "greedy": "#8b929c",
+    "uncoordinated": "#b4b8be",
+    "greedy": "#5f6b7a",
     "csp": COLOR_ACCENT,
+}
+
+# Plain-language names used everywhere a strategy is shown to a reader.
+ALGORITHM_LABELS = {
+    "uncoordinated": "No coordination",
+    "greedy": "Simple green wave",
+    "csp": "Optimized search",
 }
 
 __all__ = [
     "ALGORITHM_COLORS",
+    "ALGORITHM_LABELS",
     "COLOR_ACCENT",
     "COLOR_BG",
     "COLOR_FAINT",
@@ -52,6 +62,7 @@ __all__ = [
     "COLOR_RED_FILL",
     "COLOR_REVERSE",
     "COLOR_ROAD",
+    "COLOR_SUNKEN",
     "COLOR_SURFACE",
     "COLOR_TEXT",
     "FONT",
@@ -67,7 +78,7 @@ def _axis() -> dict[str, object]:
         "zerolinecolor": COLOR_LINE,
         "linecolor": COLOR_LINE,
         "tickcolor": COLOR_LINE,
-        "tickfont": {"family": FONT_MONO, "size": 11, "color": COLOR_MUTED},
+        "tickfont": {"family": FONT, "size": 11, "color": COLOR_MUTED},
         "title": {"font": {"size": 12, "color": COLOR_MUTED}},
         "showline": True,
         "ticks": "outside",
@@ -83,23 +94,23 @@ def base_layout(**overrides: object) -> object:
         "font": {"family": FONT, "color": COLOR_TEXT, "size": 12},
         "paper_bgcolor": "rgba(0,0,0,0)",
         "plot_bgcolor": "rgba(0,0,0,0)",
-        "margin": {"l": 56, "r": 24, "t": 56, "b": 44},
+        "margin": {"l": 56, "r": 16, "t": 44, "b": 52},
         "title": {"x": 0, "xanchor": "left", "font": {"size": 14, "color": COLOR_TEXT}},
         "xaxis": _axis(),
         "yaxis": _axis(),
         "legend": {
             "bgcolor": "rgba(0,0,0,0)",
-            "font": {"size": 11, "color": COLOR_MUTED},
+            "font": {"size": 12, "color": COLOR_MUTED},
             "orientation": "h",
             "yanchor": "bottom",
             "y": 1.02,
-            "xanchor": "right",
-            "x": 1,
+            "xanchor": "left",
+            "x": 0,
         },
         "hoverlabel": {
             "bgcolor": COLOR_SURFACE,
             "bordercolor": COLOR_LINE,
-            "font": {"family": FONT_MONO, "size": 12, "color": COLOR_TEXT},
+            "font": {"family": FONT, "size": 12, "color": COLOR_TEXT},
         },
         "colorway": [ALGORITHM_COLORS[k] for k in ("uncoordinated", "greedy", "csp")],
     }

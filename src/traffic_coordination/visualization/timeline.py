@@ -5,7 +5,7 @@ from __future__ import annotations
 import plotly.graph_objects as go
 
 from ..config import ScenarioConfig
-from . import COLOR_GREEN_FILL, COLOR_MUTED, COLOR_RED_FILL, FONT_MONO, base_layout
+from . import COLOR_GREEN_FILL, COLOR_RED_FILL, base_layout
 
 GREEN_FILL = COLOR_GREEN_FILL
 RED_FILL = COLOR_RED_FILL
@@ -69,27 +69,15 @@ def signal_timeline_figure(
     fig = go.Figure()
     fig.update_layout(
         shapes=shapes,
-        xaxis=dict(title="Time (s)", range=[0, horizon], dtick=config.cycle_length),
+        xaxis=dict(title="Time (seconds)", range=[0, horizon], dtick=config.cycle_length),
         yaxis=dict(
             tickmode="array",
             tickvals=list(range(n)),
-            ticktext=[f"I{k + 1}" for k in reversed(range(n))],
+            ticktext=[f"Light {k + 1}" for k in reversed(range(n))],
             range=[-0.5, n - 0.5],
         ),
     )
     fig.layout.update(
-        base_layout(title="Green windows per intersection", height=120 + 46 * n)
-    )
-    note = f"O₁ = 0 reference · C = {config.cycle_length:.0f} s · G = {config.green_duration:.0f} s"
-    fig.add_annotation(
-        xref="paper",
-        x=1,
-        yref="paper",
-        y=1.02,
-        xanchor="right",
-        yanchor="bottom",
-        text=note,
-        showarrow=False,
-        font=dict(family=FONT_MONO, size=11, color=COLOR_MUTED),
+        base_layout(title=None, height=90 + 44 * n, margin={"l": 64, "r": 16, "t": 16, "b": 44})
     )
     return fig

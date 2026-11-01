@@ -1,9 +1,21 @@
-"""Dark dashboard theme: global CSS and small HTML builders for ``app.py``.
+"""Dashboard design system: global CSS and small HTML builders for the pages.
 
-Every function returns a string; the app decides where it renders (through
-``st.html``). Inputs are escaped, numbers are formatted by the caller, and the
-colour tokens are the ones in :mod:`traffic_coordination.visualization`, so
-charts and chrome stay one palette.
+One set of tokens (from :mod:`traffic_coordination.visualization`) drives the
+Streamlit theme, this stylesheet and every Plotly chart. Each builder returns a
+string that a page renders with ``st.html``. Plain-text arguments are escaped;
+arguments named ``*_html`` are trusted markup written by the app itself.
+
+Components, smallest first:
+
+- ``badge``: a short status word with a coloured dot
+- ``page_header`` / ``section``: the only two heading levels on a page
+- ``summary``: the one sentence that answers "so what?" for a result
+- ``stat_grid``: a row of numbers, each with a label and a before-value
+- ``strategy_cards``: the three timing strategies side by side
+- ``plan_table``: when each light turns green, in words
+- ``terms`` / ``steps``: glossary entries and numbered explanations
+- ``callout`` / ``empty_state``: inline notices
+- ``signal_row``: animated traffic lights running a timing plan
 """
 
 from __future__ import annotations
@@ -22,31 +34,32 @@ from .visualization import (
     COLOR_LINE,
     COLOR_MUTED,
     COLOR_RED,
+    COLOR_SUNKEN,
     COLOR_SURFACE,
     COLOR_TEXT,
 )
 
 __all__ = [
     "GLOBAL_CSS",
-    "LedgerRow",
+    "Stat",
+    "StrategyCard",
+    "badge",
     "callout",
     "empty_state",
-    "footer",
-    "headline_block",
-    "hero_stat",
-    "kv_grid",
-    "ledger",
-    "masthead",
+    "legend",
+    "page_header",
+    "plan_table",
+    "section",
+    "signal_row",
     "signal_row_svg",
-    "offset_strip",
-    "overview_block",
-    "prose_sections",
-    "section_title",
-    "spec_sheet",
-    "status_pill",
+    "stat_grid",
+    "steps",
+    "strategy_cards",
+    "summary",
+    "terms",
 ]
 
-# Real seconds of signal time per animated second in the masthead.
+# Real seconds of signal time per animated second in the signal row.
 TIME_SCALE = 10.0
 
 GLOBAL_CSS = f"""
@@ -54,292 +67,189 @@ GLOBAL_CSS = f"""
 :root {{
   --bg: {COLOR_BG};
   --surface: {COLOR_SURFACE};
-  --surface-2: #1a1e24;
+  --sunken: {COLOR_SUNKEN};
   --line: {COLOR_LINE};
-  --line-soft: #1b1f25;
   --text: {COLOR_TEXT};
   --muted: {COLOR_MUTED};
   --faint: {COLOR_FAINT};
   --accent: {COLOR_ACCENT};
+  --accent-soft: rgba(36, 87, 214, 0.08);
   --go: {COLOR_GREEN};
+  --go-soft: rgba(30, 154, 90, 0.09);
   --stop: {COLOR_RED};
-  --lamp-off: #23272e;
-  --mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  --sans: Geist, ui-sans-serif, system-ui, sans-serif;
-  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --stop-soft: rgba(214, 67, 59, 0.08);
+  --warn: #b7791f;
+  --warn-soft: rgba(227, 162, 26, 0.12);
+  --sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius: 10px;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 }}
 
 /* ---- canvas ---------------------------------------------------------- */
 html, body, [data-testid="stAppViewContainer"] {{ background: var(--bg); }}
-[data-testid="stAppViewContainer"]::after {{
-  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 1000;
-  opacity: 0.035; mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}}
-[data-testid="stHeader"] {{ background: transparent; }}
-[data-testid="stMainBlockContainer"] {{
-  max-width: 1320px; padding-top: 2.25rem; padding-bottom: 5rem;
-}}
+[data-testid="stHeader"] {{ background: var(--bg); border-bottom: 1px solid var(--line); }}
+[data-testid="stMainBlockContainer"] {{ max-width: 1180px; padding-top: 4.5rem; padding-bottom: 4rem; }}
 [data-testid="stMain"] p, [data-testid="stMain"] li {{ color: var(--muted); }}
 [data-testid="stMain"] strong {{ color: var(--text); font-weight: 600; }}
 code, [data-testid="stMain"] code {{
   font-family: var(--mono); font-size: 0.86em; color: var(--text);
-  background: var(--surface); border: 1px solid var(--line-soft);
-  padding: 0.08em 0.36em; border-radius: 4px;
+  background: var(--sunken); border: 0; padding: 0.08em 0.35em; border-radius: 4px;
 }}
-[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p {{
-  color: var(--faint) !important; font-size: 0.82rem;
-}}
-hr {{ border-color: var(--line-soft) !important; }}
+[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p {{ color: var(--faint) !important; font-size: 0.84rem; }}
+hr {{ border-color: var(--line) !important; }}
 
-/* ---- sidebar --------------------------------------------------------- */
-[data-testid="stSidebar"] {{ border-right: 1px solid var(--line-soft); }}
-[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {{ padding-top: 1.25rem; }}
-[data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {{
-  font-family: var(--mono) !important; font-size: 0.7rem !important; font-weight: 500 !important;
-  letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint) !important;
-  padding: 0.25rem 0 0 !important; margin: 0 !important;
+/* ---- widgets --------------------------------------------------------- */
+[data-testid="stForm"] {{
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 1.25rem 1.25rem 1.1rem;
 }}
-[data-testid="stSidebar"] label p {{ color: var(--muted) !important; font-size: 0.84rem; }}
-[data-testid="stSidebar"] hr {{ margin: 1.1rem 0 !important; }}
-
-/* ---- tabs (react-aria in Streamlit >= 1.5x; BaseWeb kept for older builds) ---- */
-[data-testid="stTabs"] [role="tablist"] {{
-  gap: 1.6rem; border-bottom: 1px solid var(--line-soft);
-  overflow-x: auto; scrollbar-width: none;
-}}
-[data-testid="stTabs"] [role="tablist"]::-webkit-scrollbar {{ display: none; }}
-[data-testid="stTabs"] [role="tab"] {{
-  padding: 0.7rem 0 0.8rem; height: auto; background: transparent;
-}}
-[data-testid="stTabs"] [role="tab"] p {{
-  font-size: 0.86rem; font-weight: 450; color: var(--faint); letter-spacing: -0.005em;
-  transition: color 0.3s var(--ease);
-}}
-[data-testid="stTabs"] [role="tab"]:hover p {{ color: var(--muted); }}
-[data-testid="stTabs"] [role="tab"][aria-selected="true"] p {{ color: var(--text); }}
-[data-testid="stTabs"] .react-aria-SelectionIndicator,
-[data-testid="stTabs"] [data-baseweb="tab-highlight"] {{ background: var(--accent); height: 2px; }}
-[data-testid="stTabs"] [data-baseweb="tab-border"] {{ display: none; }}
-[data-testid="stTabPanel"], [data-testid="stTabs"] [data-baseweb="tab-panel"] {{ padding-top: 0.75rem; }}
-[data-testid="stTabPanel"] > div {{ animation: tc-rise 0.6s var(--ease) both; }}
-
-/* ---- buttons --------------------------------------------------------- */
+[data-testid="stWidgetLabel"] p {{ color: var(--text) !important; font-weight: 500; font-size: 0.9rem; }}
 [data-testid="stBaseButton-primary"], [data-testid="stBaseButton-secondary"],
+[data-testid="stBaseButton-primaryFormSubmit"], [data-testid="stBaseButton-secondaryFormSubmit"],
 [data-testid="stDownloadButton"] button {{
-  border-radius: 6px; font-weight: 500; letter-spacing: -0.005em;
-  transition: transform 0.25s var(--ease), background-color 0.25s var(--ease),
-              border-color 0.25s var(--ease), color 0.25s var(--ease);
+  border-radius: 8px; font-weight: 500; min-height: 2.6rem;
+  transition: background-color 0.2s var(--ease), border-color 0.2s var(--ease);
 }}
-[data-testid="stBaseButton-primary"] {{
-  background: var(--accent); border: 1px solid var(--accent); color: #17120a;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.22);
+[data-testid="stBaseButton-primary"], [data-testid="stBaseButton-primaryFormSubmit"] {{
+  background: var(--accent); border-color: var(--accent);
 }}
-[data-testid="stBaseButton-primary"]:hover {{
-  background: #ebb257; border-color: #ebb257; color: #17120a;
+[data-testid="stBaseButton-primary"]:hover, [data-testid="stBaseButton-primaryFormSubmit"]:hover {{
+  background: #1c48b8; border-color: #1c48b8;
 }}
-[data-testid="stBaseButton-primary"] p {{ color: #17120a; font-weight: 600; }}
-[data-testid="stBaseButton-secondary"], [data-testid="stDownloadButton"] button {{
-  background: var(--surface); border: 1px solid var(--line); color: var(--text);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
-}}
-[data-testid="stBaseButton-secondary"]:hover, [data-testid="stDownloadButton"] button:hover {{
-  border-color: #3a404a; color: var(--text); background: var(--surface-2);
-}}
-button:active {{ transform: translateY(1px) scale(0.99); }}
-
-/* ---- alerts, tables, charts ----------------------------------------- */
-[data-testid="stAlertContainer"] {{
-  background: var(--surface) !important; border: 1px solid var(--line-soft);
-  border-left: 2px solid var(--faint); border-radius: 6px;
-}}
-[data-testid="stAlertContainer"] p {{ color: var(--muted) !important; }}
-div[data-testid="stAlert"]:has([data-testid="stAlertContentWarning"]) [data-testid="stAlertContainer"] {{
-  border-left-color: var(--accent);
-}}
-div[data-testid="stAlert"]:has([data-testid="stAlertContentError"]) [data-testid="stAlertContainer"] {{
-  border-left-color: var(--stop);
-}}
-[data-testid="stDataFrame"] {{ border: 1px solid var(--line-soft); border-radius: 6px; }}
-[data-testid="stExpander"] details {{
-  border: 1px solid var(--line-soft); border-radius: 6px; background: transparent;
-}}
-[data-testid="stExpander"] summary p {{ color: var(--muted); font-size: 0.86rem; }}
-[data-testid="stSlider"] [data-testid="stTickBar"] {{ font-family: var(--mono); }}
-/* multiselect value chips (data-tag in Streamlit >= 1.5x, BaseWeb tag before) */
-[data-tag], [data-baseweb="tag"] {{
-  background: var(--surface-2) !important; border: 1px solid var(--line);
-}}
-[data-tag] span, [data-baseweb="tag"] span {{ color: var(--text) !important; font-family: var(--mono); font-size: 0.78rem; }}
-[data-tag] button, [data-baseweb="tag"] svg {{ color: var(--faint) !important; fill: var(--faint) !important; }}
-
-/* ---- shared building blocks ----------------------------------------- */
-.tc-eyebrow {{
-  font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.12em;
-  text-transform: uppercase; color: var(--faint);
-}}
-.tc-num {{ font-family: var(--mono); font-variant-numeric: tabular-nums; }}
-.tc-section {{ display: flex; align-items: baseline; gap: 0.9rem; margin: 1.6rem 0 0.4rem; flex-wrap: wrap; }}
-.tc-section h3 {{
-  font-family: var(--sans); font-size: 1.05rem; font-weight: 600; color: var(--text);
-  letter-spacing: -0.015em; margin: 0; padding: 0;
-}}
-.tc-section .tc-eyebrow {{ order: -1; min-width: 1.6rem; }}
-.tc-section p {{ margin: 0; color: var(--faint); font-size: 0.84rem; }}
-
-/* masthead */
-.tc-mast {{
-  display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  gap: 3rem; align-items: end; padding: 0.5rem 0 2.25rem;
-}}
-.tc-mast h1 {{
-  font-family: var(--sans); font-size: clamp(1.9rem, 3.4vw, 2.75rem); font-weight: 600;
-  line-height: 1.04; letter-spacing: -0.035em; color: var(--text); margin: 0.9rem 0 1rem;
-  padding: 0;
-}}
-.tc-mast h1 span {{ color: var(--faint); }}
-.tc-mast p {{ color: var(--muted); max-width: 56ch; line-height: 1.6; margin: 0; font-size: 0.95rem; }}
-.tc-wave {{
-  border: 1px solid var(--line-soft); border-radius: 10px; padding: 1.1rem 1.25rem 0.9rem;
-  background: linear-gradient(180deg, rgba(255,255,255,0.018), rgba(255,255,255,0));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
-}}
-.tc-wave-head {{ display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; white-space: nowrap; }}
-.tc-wave-head b {{ color: var(--text); font-weight: 500; }}
-.tc-wave img {{ width: 100%; height: auto; display: block; margin-top: 0.9rem; }}
-.tc-wave-labels {{ display: grid; margin-top: 0.55rem; text-align: center; }}
-.tc-wave-labels b {{ display: block; font-family: var(--mono); font-size: 0.72rem; font-weight: 500; color: var(--muted); }}
-.tc-wave-labels span {{ font-family: var(--mono); font-size: 0.68rem; color: var(--faint); }}
-.tc-live {{ display: inline-flex; align-items: center; gap: 0.45rem; }}
-.tc-live i {{
-  width: 6px; height: 6px; border-radius: 50%; background: var(--go);
-  animation: tc-breathe 2.4s ease-in-out infinite;
+[data-testid="stBaseButton-primary"] p, [data-testid="stBaseButton-primaryFormSubmit"] p {{ color: #fff; }}
+[data-testid="stExpander"] details {{ border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }}
+[data-testid="stDataFrame"] {{ border: 1px solid var(--line); border-radius: 8px; }}
+[data-testid="stPlotlyChart"] {{
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 0.6rem 0.75rem 0.25rem;
 }}
 
-/* spec sheet + hero stat */
-.tc-overview {{
-  display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.25fr); gap: 3.5rem;
-  padding: 1.6rem 0 2.5rem; border-bottom: 1px solid var(--line-soft); margin-bottom: 0.5rem;
+/* ---- headings -------------------------------------------------------- */
+.ui-page {{ margin: 0 0 1.75rem; max-width: 72ch; }}
+.ui-page h1 {{
+  font-family: var(--sans); font-size: clamp(1.75rem, 3.2vw, 2.3rem); font-weight: 600;
+  letter-spacing: -0.02em; line-height: 1.15; color: var(--text); margin: 0 0 0.6rem; padding: 0;
 }}
-.tc-hero {{ display: flex; flex-direction: column; gap: 0.6rem; }}
-.tc-hero .value {{
-  font-family: var(--mono); font-size: clamp(2.6rem, 5vw, 3.6rem); font-weight: 500;
-  letter-spacing: -0.04em; line-height: 1; color: var(--text); font-variant-numeric: tabular-nums;
+.ui-page p {{ font-size: 1.04rem; line-height: 1.6; color: var(--muted); margin: 0; }}
+.ui-section {{ margin: 2.4rem 0 0.9rem; max-width: 76ch; }}
+.ui-section.first {{ margin-top: 0; }}
+.ui-section h2 {{
+  font-family: var(--sans); font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em;
+  color: var(--text); margin: 0 0 0.35rem; padding: 0;
 }}
-.tc-hero .value small {{ font-size: 0.4em; color: var(--faint); letter-spacing: 0; margin-left: 0.4rem; }}
-.tc-hero .note {{ color: var(--muted); font-size: 0.88rem; line-height: 1.55; max-width: 42ch; }}
-.tc-hero .note code {{ font-size: 0.82em; }}
-.tc-spec {{ display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2.5rem; margin: 0; }}
-.tc-spec div {{
-  display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
-  padding: 0.72rem 0; border-top: 1px solid var(--line-soft);
-}}
-.tc-spec dt {{ color: var(--faint); font-size: 0.84rem; }}
-.tc-spec dd {{ margin: 0; color: var(--text); font-family: var(--mono); font-size: 0.88rem; text-align: right; }}
+.ui-section p {{ margin: 0; color: var(--muted); line-height: 1.6; font-size: 0.95rem; }}
+.ui-section p + p {{ margin-top: 0.5rem; }}
 
-/* status pill */
-.tc-pill {{
+/* ---- badge ----------------------------------------------------------- */
+.ui-badge {{
   display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap;
-  font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.02em; color: var(--muted);
-  padding: 0.18rem 0.5rem; border: 1px solid var(--line); border-radius: 999px;
+  font-size: 0.78rem; font-weight: 500; color: var(--muted);
+  padding: 0.15rem 0.55rem; border-radius: 999px; background: var(--sunken);
 }}
-.tc-pill i {{ width: 5px; height: 5px; border-radius: 50%; background: var(--faint); }}
-.tc-pill.ok i {{ background: var(--go); }}
-.tc-pill.warn i {{ background: var(--accent); }}
-.tc-pill.bad i {{ background: var(--stop); }}
+.ui-badge i {{ width: 6px; height: 6px; border-radius: 50%; background: var(--faint); }}
+.ui-badge.ok {{ background: var(--go-soft); color: #17784a; }}
+.ui-badge.ok i {{ background: var(--go); }}
+.ui-badge.warn {{ background: var(--warn-soft); color: #8a5a12; }}
+.ui-badge.warn i {{ background: var(--warn); }}
+.ui-badge.bad {{ background: var(--stop-soft); color: #a8322b; }}
+.ui-badge.bad i {{ background: var(--stop); }}
 
-/* comparison ledger */
-.tc-ledger {{ width: 100%; }}
-.tc-ledger .row {{
-  display: grid; align-items: center; gap: 1.25rem;
-  grid-template-columns: minmax(9rem, 1.1fr) repeat(3, minmax(4.5rem, 0.5fr)) minmax(8rem, 1.6fr);
-  padding: 0.95rem 0; border-top: 1px solid var(--line-soft);
-  animation: tc-rise 0.7s var(--ease) both; animation-delay: calc(var(--i, 0) * 70ms);
+/* ---- summary --------------------------------------------------------- */
+.ui-summary {{
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 1.25rem 1.4rem;
 }}
-.tc-ledger .row.head {{ border-top: 0; padding: 0 0 0.55rem; animation: none; }}
-.tc-ledger .row.head span {{
-  font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--faint);
+.ui-summary h3 {{
+  font-family: var(--sans); font-size: 1.2rem; font-weight: 500; line-height: 1.45;
+  color: var(--text); margin: 0; padding: 0; letter-spacing: -0.005em;
 }}
-.tc-ledger .name {{ display: flex; flex-direction: column; gap: 0.35rem; align-items: flex-start; }}
-.tc-ledger .name b {{ color: var(--text); font-weight: 500; font-size: 0.95rem; }}
-.tc-ledger .n {{ font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--muted); text-align: right; font-size: 0.9rem; }}
-.tc-ledger .row.best .n.j {{ color: var(--text); }}
-.tc-ledger .bar {{ height: 6px; background: var(--line-soft); border-radius: 3px; overflow: hidden; }}
-.tc-ledger .bar i {{
-  display: block; height: 100%; border-radius: 3px; transform-origin: left center;
-  animation: tc-grow 1.1s var(--ease) both; animation-delay: calc(var(--i, 0) * 90ms + 120ms);
+.ui-summary h3 b {{ font-weight: 600; color: var(--accent); }}
+.ui-summary p {{ margin: 0.6rem 0 0; color: var(--muted); font-size: 0.9rem; line-height: 1.55; }}
+.ui-summary .ui-badge {{ margin-top: 0.85rem; }}
+
+/* ---- stats ----------------------------------------------------------- */
+.ui-stats {{ padding: 0 !important; display: grid; grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr)); gap: 0.75rem; margin-top: 0.75rem; }}
+.ui-stat {{ background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.95rem 1.1rem; }}
+.ui-stat dt {{ font-size: 0.84rem; color: var(--muted); margin: 0 0 0.35rem; }}
+.ui-stat dd {{ margin: 0; }}
+.ui-stat .v {{ font-size: 1.7rem; font-weight: 600; color: var(--text); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }}
+.ui-stat .v small {{ font-size: 0.55em; font-weight: 500; color: var(--faint); margin-left: 0.25rem; letter-spacing: 0; }}
+.ui-stat .was {{ display: block; margin-top: 0.2rem; font-size: 0.82rem; color: var(--faint); font-variant-numeric: tabular-nums; }}
+.ui-stat .was b {{ color: #17784a; font-weight: 600; }}
+
+/* ---- strategy cards -------------------------------------------------- */
+.ui-cards {{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }}
+.ui-card {{
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 0.7rem;
 }}
-.tc-ledger .row.head .r {{ text-align: right; }}
+.ui-card.best {{ border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }}
+.ui-card header {{ display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }}
+.ui-card h4 {{ display: flex; align-items: center; gap: 0.5rem; margin: 0; padding: 0; font-family: var(--sans); font-size: 1rem; font-weight: 600; color: var(--text); }}
+.ui-card h4 i {{ width: 10px; height: 10px; border-radius: 3px; flex: none; }}
+.ui-card > p {{ margin: 0; font-size: 0.88rem; line-height: 1.5; color: var(--muted); }}
+.ui-card dl {{ margin: auto 0 0; display: grid; gap: 0.35rem; padding-top: 0.7rem; border-top: 1px solid var(--line); }}
+.ui-card dl div {{ display: flex; justify-content: space-between; gap: 1rem; }}
+.ui-card dt {{ font-size: 0.86rem; color: var(--muted); }}
+.ui-card dd {{ margin: 0; font-size: 0.9rem; font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }}
+.ui-card .bar {{ height: 6px; border-radius: 3px; background: var(--sunken); overflow: hidden; }}
+.ui-card .bar i {{ display: block; height: 100%; border-radius: 3px; transform-origin: left; animation: ui-grow 0.9s var(--ease) both; }}
 
-/* offset strip */
-.tc-offsets {{ display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); border-top: 1px solid var(--line-soft); }}
-.tc-offsets div {{ padding: 0.8rem 0.9rem 0.2rem 0; border-right: 1px solid var(--line-soft); margin-right: 0.9rem; }}
-.tc-offsets div:last-child {{ border-right: 0; margin-right: 0; }}
-.tc-offsets span {{ display: block; font-family: var(--mono); font-size: 0.7rem; color: var(--faint); letter-spacing: 0.08em; }}
-.tc-offsets b {{ font-family: var(--mono); font-size: 1.25rem; font-weight: 500; color: var(--text); letter-spacing: -0.02em; }}
-.tc-offsets b small {{ font-size: 0.6em; color: var(--faint); margin-left: 0.15rem; }}
+/* ---- plan table ------------------------------------------------------ */
+.ui-plan {{ width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }}
+.ui-plan th {{ text-align: left; font-size: 0.82rem; font-weight: 500; color: var(--muted); background: var(--sunken); padding: 0.6rem 1rem; }}
+.ui-plan td {{ padding: 0.7rem 1rem; border-top: 1px solid var(--line); font-size: 0.92rem; color: var(--muted); vertical-align: top; }}
+.ui-plan td:first-child {{ color: var(--text); font-weight: 500; white-space: nowrap; }}
+.ui-plan td.n {{ color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }}
 
-/* key/value grid */
-.tc-kv {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); column-gap: 2rem; }}
-.tc-kv div {{ padding: 0.75rem 0; border-top: 1px solid var(--line-soft); display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }}
-.tc-kv span {{ font-size: 0.78rem; color: var(--faint); }}
-.tc-kv b {{ font-family: var(--mono); font-weight: 500; color: var(--text); font-size: 0.95rem; overflow-wrap: anywhere; }}
-
-/* callout + empty state */
-.tc-callout {{
-  display: grid; grid-template-columns: auto 1fr; gap: 0.9rem; align-items: start;
-  padding: 1rem 1.1rem; border: 1px solid var(--line-soft); border-radius: 8px; background: var(--surface);
+/* ---- terms + steps --------------------------------------------------- */
+.ui-terms {{ padding: 0 !important; display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 0.75rem; margin: 0; }}
+.ui-terms div {{ background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 0.9rem 1.05rem; }}
+.ui-terms dt {{ display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; font-weight: 600; color: var(--text); font-size: 0.95rem; margin-bottom: 0.3rem; }}
+.ui-terms dt span {{ font-weight: 600; color: var(--accent); font-variant-numeric: tabular-nums; white-space: nowrap; }}
+.ui-terms dd {{ margin: 0; color: var(--muted); font-size: 0.88rem; line-height: 1.55; }}
+.ui-steps {{ list-style: none; margin: 0; padding: 0 !important; display: grid; gap: 0.6rem; counter-reset: step; max-width: 78ch; }}
+.ui-steps li {{ display: grid; grid-template-columns: 1.9rem 1fr; gap: 0.85rem; counter-increment: step; }}
+.ui-steps li::before {{
+  content: counter(step); width: 1.9rem; height: 1.9rem; border-radius: 50%;
+  display: grid; place-items: center; font-size: 0.85rem; font-weight: 600;
+  color: var(--accent); background: var(--accent-soft);
 }}
-.tc-callout i {{ width: 8px; height: 8px; border-radius: 50%; margin-top: 0.45rem; background: var(--faint); }}
-.tc-callout.ok i {{ background: var(--go); }}
-.tc-callout.warn i {{ background: var(--accent); }}
-.tc-callout.bad i {{ background: var(--stop); }}
-.tc-callout p {{ margin: 0; color: var(--muted); line-height: 1.55; font-size: 0.9rem; }}
-.tc-callout b {{ color: var(--text); font-weight: 500; }}
-.tc-empty {{
-  display: grid; grid-template-columns: 2.25rem 1fr; gap: 1.1rem; align-items: start;
-  padding: 1.6rem 0 1rem; border-top: 1px dashed var(--line);
+.ui-steps .t {{ display: block; color: var(--text); font-weight: 600; font-size: 0.97rem; margin: 0.25rem 0 0.15rem; }}
+.ui-steps p {{ margin: 0; color: var(--muted); font-size: 0.92rem; line-height: 1.6; }}
+
+/* ---- callout + empty ------------------------------------------------- */
+.ui-callout {{ border-radius: var(--radius); padding: 0.85rem 1.05rem; background: var(--sunken); }}
+.ui-callout p {{ margin: 0; color: var(--text); font-size: 0.92rem; line-height: 1.55; }}
+.ui-callout.ok {{ background: var(--go-soft); }}
+.ui-callout.warn {{ background: var(--warn-soft); }}
+.ui-callout.bad {{ background: var(--stop-soft); }}
+.ui-callout.info {{ background: var(--accent-soft); }}
+.ui-empty {{ border: 1px dashed var(--line); border-radius: var(--radius); padding: 1.5rem; text-align: center; background: var(--surface); }}
+.ui-empty h4 {{ margin: 0 0 0.3rem; padding: 0; font-family: var(--sans); font-size: 1rem; font-weight: 600; color: var(--text); }}
+.ui-empty p {{ margin: 0 auto; max-width: 52ch; color: var(--muted); font-size: 0.9rem; line-height: 1.55; }}
+
+/* ---- legend + signal row --------------------------------------------- */
+.ui-legend {{ display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; margin: 0.25rem 0 0.6rem; }}
+.ui-legend span {{ display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.85rem; color: var(--muted); }}
+.ui-legend i {{ display: inline-block; width: 18px; height: 4px; border-radius: 2px; }}
+.ui-legend i.bar {{ height: 7px; }}
+.ui-signals {{ background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1rem 1.1rem 0.8rem; }}
+.ui-signals img {{ width: 100%; height: auto; display: block; }}
+.ui-signals .labels {{ display: grid; text-align: center; margin-top: 0.4rem; }}
+.ui-signals .labels b {{ display: block; font-size: 0.82rem; font-weight: 600; color: var(--text); }}
+.ui-signals .labels span {{ font-size: 0.78rem; color: var(--muted); font-variant-numeric: tabular-nums; }}
+.ui-signals p {{ margin: 0.7rem 0 0; font-size: 0.82rem; color: var(--faint); text-align: center; }}
+
+@keyframes ui-grow {{ from {{ transform: scaleX(0); }} to {{ transform: scaleX(1); }} }}
+
+@media (max-width: 860px) {{
+  .ui-cards {{ grid-template-columns: 1fr; }}
 }}
-.tc-empty img {{ width: 2.25rem; height: 2.25rem; }}
-.tc-empty h4 {{ margin: 0 0 0.35rem; padding: 0; color: var(--text); font-size: 0.98rem; font-weight: 500; font-family: var(--sans); }}
-.tc-empty p {{ margin: 0; color: var(--muted); font-size: 0.88rem; line-height: 1.55; max-width: 60ch; }}
-
-/* results headline */
-.tc-headline {{
-  display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 3rem; align-items: end;
-  padding: 1.6rem 0 2rem; border-bottom: 1px solid var(--line-soft); margin-bottom: 0.5rem;
-}}
-
-/* learn */
-.tc-prose {{ max-width: 860px; }}
-.tc-prose section {{
-  display: grid; grid-template-columns: 3.25rem minmax(0, 1fr); gap: 1.25rem;
-  padding: 1.5rem 0; border-top: 1px solid var(--line-soft);
-}}
-.tc-prose section > span {{ font-family: var(--mono); font-size: 0.78rem; color: var(--accent); padding-top: 0.2rem; }}
-.tc-prose h4 {{ margin: 0 0 0.55rem; padding: 0; font-family: var(--sans); font-size: 1rem; font-weight: 600; color: var(--text); letter-spacing: -0.01em; }}
-.tc-prose p, .tc-prose li {{ color: var(--muted); line-height: 1.65; font-size: 0.92rem; margin: 0; max-width: 68ch; }}
-.tc-prose ul {{ margin: 0.2rem 0 0; padding-left: 1.1rem; }}
-.tc-prose li + li {{ margin-top: 0.2rem; }}
-
-.tc-foot {{ margin-top: 3rem; padding-top: 1.1rem; border-top: 1px solid var(--line-soft);
-  display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }}
-.tc-foot span {{ font-family: var(--mono); font-size: 0.7rem; color: var(--faint); letter-spacing: 0.04em; }}
-
-@keyframes tc-rise {{ from {{ opacity: 0; transform: translateY(6px); }} to {{ opacity: 1; transform: none; }} }}
-@keyframes tc-grow {{ from {{ transform: scaleX(0); }} to {{ transform: scaleX(1); }} }}
-@keyframes tc-breathe {{ 0%, 100% {{ opacity: 1; }} 50% {{ opacity: 0.35; }} }}
-
-@media (max-width: 767px) {{
-  [data-testid="stMainBlockContainer"] {{ padding-left: 1rem; padding-right: 1rem; }}
-  .tc-mast, .tc-overview, .tc-headline {{ grid-template-columns: 1fr; gap: 1.75rem; }}
-  .tc-spec {{ grid-template-columns: 1fr; }}
-  .tc-ledger .row {{ grid-template-columns: minmax(0, 1fr) repeat(3, auto); }}
-  .tc-ledger .bar {{ grid-column: 1 / -1; }}
-  .tc-ledger .row.head span:last-child {{ display: none; }}
-  .tc-offsets {{ grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); }}
-  .tc-prose section {{ grid-template-columns: 1fr; gap: 0.4rem; }}
+@media (max-width: 640px) {{
+  [data-testid="stMainBlockContainer"] {{ padding-left: 1rem; padding-right: 1rem; padding-top: 4rem; }}
+  .ui-plan th, .ui-plan td {{ padding-left: 0.6rem; padding-right: 0.6rem; }}
 }}
 @media (prefers-reduced-motion: reduce) {{
   *, *::before, *::after {{ animation: none !important; transition: none !important; }}
@@ -352,16 +262,145 @@ def _e(value: object) -> str:
     return escape(str(value), quote=True)
 
 
-def section_title(title: str, index: str | None = None, note: str | None = None) -> str:
-    """Section heading: optional mono index, title, optional faint note."""
-    idx = f'<span class="tc-eyebrow">{_e(index)}</span>' if index else ""
-    tail = f"<p>{_e(note)}</p>" if note else ""
-    return f'<div class="tc-section">{idx}<h3>{_e(title)}</h3>{tail}</div>'
+def badge(text: str, tone: str = "neutral") -> str:
+    """Short status word with a dot; ``tone`` is ok, warn, bad or neutral."""
+    return f'<span class="ui-badge {_e(tone)}"><i></i>{_e(text)}</span>'
 
 
-def status_pill(text: str, tone: str = "neutral") -> str:
-    """Small rounded status label; ``tone`` is ok, warn, bad or neutral."""
-    return f'<span class="tc-pill {_e(tone)}"><i></i>{_e(text)}</span>'
+def page_header(title: str, lede_html: str) -> str:
+    """Page title plus one paragraph saying what the page is for."""
+    return f'<header class="ui-page"><h1>{_e(title)}</h1><p>{lede_html}</p></header>'
+
+
+def section(title: str, *paragraphs_html: str, first: bool = False) -> str:
+    """Section heading with zero or more short explanatory paragraphs."""
+    body = "".join(f"<p>{p}</p>" for p in paragraphs_html)
+    cls = "ui-section first" if first else "ui-section"
+    return f'<div class="{cls}"><h2>{_e(title)}</h2>{body}</div>'
+
+
+def summary(headline_html: str, note_html: str = "", badge_html: str = "") -> str:
+    """Give the one-sentence answer for a result, with an optional note and badge."""
+    note = f"<p>{note_html}</p>" if note_html else ""
+    return f'<div class="ui-summary"><h3>{headline_html}</h3>{note}{badge_html}</div>'
+
+
+@dataclass(frozen=True)
+class Stat:
+    """One figure in a ``stat_grid``: label, value, unit and optional baseline."""
+
+    label: str
+    value: str
+    unit: str = ""
+    was: str = ""
+    change: str = ""
+
+
+def stat_grid(stats: Sequence[Stat]) -> str:
+    """Row of stat cards; ``was`` and ``change`` render as 'was X · -85%'."""
+    cells = []
+    for s in stats:
+        unit = f"<small>{_e(s.unit)}</small>" if s.unit else ""
+        was = ""
+        if s.was:
+            change = f" &middot; <b>{_e(s.change)}</b>" if s.change else ""
+            was = f'<span class="was">was {_e(s.was)}{change}</span>'
+        cells.append(
+            f'<div class="ui-stat"><dt>{_e(s.label)}</dt>'
+            f'<dd><span class="v">{_e(s.value)}{unit}</span>{was}</dd></div>'
+        )
+    return f'<dl class="ui-stats">{"".join(cells)}</dl>'
+
+
+@dataclass(frozen=True)
+class StrategyCard:
+    """One strategy's card: plain name, what it does, and its scores."""
+
+    algorithm: str
+    name: str
+    description: str
+    status: str
+    tone: str
+    wait_per_car: float
+    stops_per_car: float
+    score: float
+
+
+def strategy_cards(cards: Sequence[StrategyCard]) -> str:
+    """Three cards side by side; the lowest score is outlined as the best."""
+    if not cards:
+        return ""
+    worst = max(c.score for c in cards) or 1.0
+    best = min(c.score for c in cards)
+    out = []
+    for c in cards:
+        color = ALGORITHM_COLORS.get(c.algorithm, COLOR_MUTED)
+        width = max(c.score / worst * 100.0, 0.8)
+        cls = "ui-card best" if c.score == best else "ui-card"
+        out.append(
+            f'<article class="{cls}"><header>'
+            f'<h4><i style="background:{color}"></i>{_e(c.name)}</h4>{badge(c.status, c.tone)}'
+            f"</header><p>{_e(c.description)}</p><dl>"
+            f"<div><dt>Waiting per car</dt><dd>{c.wait_per_car:,.1f} s</dd></div>"
+            f"<div><dt>Stops per car</dt><dd>{c.stops_per_car:,.2f}</dd></div>"
+            f"<div><dt>Score (lower is better)</dt><dd>{c.score:,.0f}</dd></div>"
+            f'</dl><div class="bar"><i style="width:{width:.2f}%;background:{color}"></i></div>'
+            "</article>"
+        )
+    return f'<div class="ui-cards">{"".join(out)}</div>'
+
+
+def plan_table(headers: Sequence[str], rows: Sequence[Sequence[str]], numeric: int = 1) -> str:
+    """Build a simple table; column ``numeric`` is drawn as a bold figure."""
+    head = "".join(f"<th>{_e(h)}</th>" for h in headers)
+    body = "".join(
+        "<tr>"
+        + "".join(
+            f'<td class="n">{_e(cell)}</td>' if i == numeric else f"<td>{_e(cell)}</td>"
+            for i, cell in enumerate(row)
+        )
+        + "</tr>"
+        for row in rows
+    )
+    return f'<table class="ui-plan"><thead><tr>{head}</tr></thead><tbody>{body}</tbody></table>'
+
+
+def terms(items: Sequence[tuple[str, str, str]]) -> str:
+    """Glossary cards of ``(term, value, explanation_html)``; value may be ''."""
+    cells = "".join(
+        f"<div><dt>{_e(term)}{f'<span>{_e(value)}</span>' if value else ''}</dt>"
+        f"<dd>{explanation}</dd></div>"
+        for term, value, explanation in items
+    )
+    return f'<dl class="ui-terms">{cells}</dl>'
+
+
+def steps(items: Sequence[tuple[str, str]]) -> str:
+    """Numbered list of ``(title, body_html)`` explanations."""
+    lis = "".join(
+        f'<li><div><span class="t">{_e(t)}</span><p>{body}</p></div></li>' for t, body in items
+    )
+    return f'<ol class="ui-steps">{lis}</ol>'
+
+
+def callout(body_html: str, tone: str = "neutral") -> str:
+    """Tinted inline notice; ``tone`` is ok, warn, bad, info or neutral."""
+    return f'<div class="ui-callout {_e(tone)}"><p>{body_html}</p></div>'
+
+
+def empty_state(title: str, body_html: str) -> str:
+    """Show a placeholder where a result will appear."""
+    return f'<div class="ui-empty"><h4>{_e(title)}</h4><p>{body_html}</p></div>'
+
+
+def legend(items: Sequence[tuple[str, str, bool]]) -> str:
+    """Inline chart key of ``(colour, label, thick)`` entries."""
+    spans = "".join(
+        f'<span><i class="{"bar" if thick else ""}" style="background:{_e(color)}"></i>'
+        f"{_e(label)}</span>"
+        for color, label, thick in items
+    )
+    return f'<div class="ui-legend">{spans}</div>'
 
 
 def signal_row_svg(offsets: Sequence[float], cycle_s: float, green_s: float) -> str:
@@ -375,7 +414,8 @@ def signal_row_svg(offsets: Sequence[float], cycle_s: float, green_s: float) -> 
     n = len(offsets)
     duration = cycle_s / TIME_SCALE
     green_pct = max(0.0, min(100.0, green_s / cycle_s * 100.0))
-    step = 420 / max(n, 1)
+    width = 900
+    step = width / max(n, 1)
     heads: list[str] = []
     for i, offset in enumerate(offsets):
         cx = step * (i + 0.5)
@@ -393,176 +433,33 @@ def signal_row_svg(offsets: Sequence[float], cycle_s: float, green_s: float) -> 
             "</g>"
         )
     style = (
-        f".head{{fill:#121519;stroke:{COLOR_LINE}}}.off{{fill:#23272e}}"
-        f".go{{fill:{COLOR_GREEN}}}.stop{{fill:{COLOR_RED}}}.pole,.road{{stroke:{COLOR_LINE}}}"
+        f".head{{fill:{COLOR_TEXT}}}.off{{fill:#3a3f46}}"
+        f".go{{fill:{COLOR_GREEN}}}.stop{{fill:{COLOR_RED}}}"
+        f".pole{{stroke:{COLOR_FAINT};stroke-width:2}}.road{{stroke:{COLOR_LINE};stroke-width:2}}"
         f"@keyframes go{{0%{{opacity:1}}{green_pct:.3f}%{{opacity:0}}100%{{opacity:0}}}}"
         f"@keyframes stop{{0%{{opacity:0}}{green_pct:.3f}%{{opacity:1}}100%{{opacity:1}}}}"
         "@media (prefers-reduced-motion:reduce){circle{animation:none!important}}"
     )
     return (
-        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 78">'
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} 78">'
         f"<style>{style}</style>"
-        '<line class="road" x1="0" y1="76" x2="420" y2="76"/>'
+        f'<line class="road" x1="0" y1="76" x2="{width}" y2="76"/>'
         + "".join(heads)
         + "</svg>"
     )
 
 
-def masthead(
-    offsets: Sequence[float] | None,
-    cycle_s: float,
-    green_s: float,
-    plan_label: str,
-    eyebrow: str,
-) -> str:
-    """Title block plus a live signal row that runs ``offsets`` in real time.
-
-    With ``offsets`` set to None (an invalid scenario) only the title renders.
-    """
-    copy = (
-        f'<div><div class="tc-eyebrow">{_e(eyebrow)}</div>'
-        "<h1>Signal coordination<br><span>on an arterial corridor.</span></h1>"
-        "<p>Three strategies plan the signal offsets for the same simulated traffic: "
-        "no coordination, greedy progression, and a CSP solver with forward checking "
-        "and branch and bound. Every figure here comes from the simulator, "
-        "not from a real street.</p></div>"
-    )
-    if offsets is None:
-        return f'<header class="tc-mast">{copy}</header>'
+def signal_row(offsets: Sequence[float], cycle_s: float, green_s: float) -> str:
+    """Animated lights for a plan, embedded as an image so ``st.html`` keeps it."""
     svg = signal_row_svg(offsets, cycle_s, green_s)
     src = "data:image/svg+xml;base64," + base64.b64encode(svg.encode("utf-8")).decode("ascii")
     labels = "".join(
-        f"<div><b>I{i + 1}</b><span>+{offset:g}s</span></div>" for i, offset in enumerate(offsets)
+        f"<div><b>Light {i + 1}</b><span>+{offset:g} s</span></div>"
+        for i, offset in enumerate(offsets)
     )
     return (
-        f'<header class="tc-mast">{copy}<div class="tc-wave"><div class="tc-wave-head">'
-        f'<span class="tc-eyebrow tc-live"><i></i>{_e(plan_label)}</span>'
-        f'<span class="tc-eyebrow">C {cycle_s:g}s &middot; G {green_s:g}s &middot; '
-        f"&times;{TIME_SCALE:g}</span></div>"
-        f'<img src="{src}" alt="{len(offsets)} signal heads running the {_e(plan_label)}">'
-        f'<div class="tc-wave-labels" style="grid-template-columns:repeat({len(offsets)},1fr)">'
-        f"{labels}</div></div></header>"
+        f'<div class="ui-signals"><img src="{src}" alt="{len(offsets)} traffic lights '
+        f'running the plan">'
+        f'<div class="labels" style="grid-template-columns:repeat({len(offsets)},1fr)">'
+        f"{labels}</div><p>Running {TIME_SCALE:g}&times; faster than real time.</p></div>"
     )
-
-
-def hero_stat(eyebrow: str, value: str, unit: str, note_html: str) -> str:
-    """One large mono figure with a caption. ``note_html`` is trusted markup."""
-    return (
-        '<div class="tc-hero">'
-        f'<span class="tc-eyebrow">{_e(eyebrow)}</span>'
-        f'<span class="value">{_e(value)}<small>{_e(unit)}</small></span>'
-        f'<span class="note">{note_html}</span>'
-        "</div>"
-    )
-
-
-def spec_sheet(rows: Sequence[tuple[str, str]]) -> str:
-    """Two-column definition list of scenario parameters."""
-    items = "".join(f"<div><dt>{_e(k)}</dt><dd>{_e(v)}</dd></div>" for k, v in rows)
-    return f'<dl class="tc-spec">{items}</dl>'
-
-
-def overview_block(hero_html: str, spec_html: str) -> str:
-    """Asymmetric two-column overview: hero figure left, spec sheet right."""
-    return f'<div class="tc-overview">{hero_html}{spec_html}</div>'
-
-
-def headline_block(left_html: str, right_html: str) -> str:
-    """Results headline: big figure left, verification statement right."""
-    return f'<div class="tc-headline">{left_html}<div>{right_html}</div></div>'
-
-
-@dataclass(frozen=True)
-class LedgerRow:
-    """One algorithm's line in the comparison ledger."""
-
-    algorithm: str
-    status: str
-    tone: str
-    waiting_s: float
-    stops: int
-    objective: float
-
-
-def ledger(rows: Sequence[LedgerRow]) -> str:
-    """Comparison table with an objective bar per algorithm; lowest J is marked."""
-    if not rows:
-        return ""
-    worst = max(r.objective for r in rows) or 1.0
-    best = min(r.objective for r in rows)
-    head = (
-        '<div class="row head"><span>Strategy</span><span class="r">Wait s</span>'
-        '<span class="r">Stops</span><span class="r">J</span><span>Objective</span></div>'
-    )
-    body = []
-    for i, r in enumerate(rows):
-        color = ALGORITHM_COLORS.get(r.algorithm, COLOR_MUTED)
-        width = max(r.objective / worst * 100.0, 0.6)
-        cls = "row best" if r.objective == best else "row"
-        body.append(
-            f'<div class="{cls}" style="--i:{i}">'
-            f'<div class="name"><b>{_e(r.algorithm)}</b>{status_pill(r.status, r.tone)}</div>'
-            f'<span class="n">{r.waiting_s:,.0f}</span>'
-            f'<span class="n">{r.stops:,}</span>'
-            f'<span class="n j">{r.objective:,.0f}</span>'
-            f'<div class="bar"><i style="width:{width:.2f}%;background:{color}"></i></div>'
-            "</div>"
-        )
-    return f'<div class="tc-ledger">{head}{"".join(body)}</div>'
-
-
-def offset_strip(offsets: Sequence[float]) -> str:
-    """Horizontal strip of per-intersection offsets."""
-    cells = "".join(
-        f"<div><span>I{i + 1}</span><b>{o:g}<small>s</small></b></div>"
-        for i, o in enumerate(offsets)
-    )
-    return f'<div class="tc-offsets">{cells}</div>'
-
-
-def kv_grid(items: Sequence[tuple[str, str]]) -> str:
-    """Responsive grid of label/value pairs (search statistics)."""
-    cells = "".join(f"<div><span>{_e(k)}</span><b>{_e(v)}</b></div>" for k, v in items)
-    return f'<div class="tc-kv">{cells}</div>'
-
-
-def callout(body_html: str, tone: str = "neutral") -> str:
-    """Inline statement with a coloured status dot. ``body_html`` is trusted."""
-    return f'<div class="tc-callout {_e(tone)}"><i></i><p>{body_html}</p></div>'
-
-
-_EMPTY_ICON_SVG = (
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" fill="none" '
-    f'stroke="{COLOR_FAINT}" stroke-width="1.5">'
-    '<rect x="11" y="3" width="14" height="30" rx="5"/>'
-    '<circle cx="18" cy="11" r="3"/><circle cx="18" cy="18" r="3"/>'
-    f'<circle cx="18" cy="25" r="3" stroke="{COLOR_ACCENT}"/></svg>'
-)
-_EMPTY_ICON = (
-    '<img alt="" src="data:image/svg+xml;base64,'
-    + base64.b64encode(_EMPTY_ICON_SVG.encode("utf-8")).decode("ascii")
-    + '">'
-)
-
-
-def empty_state(title: str, body_html: str) -> str:
-    """Composed empty state with a signal-head glyph. ``body_html`` is trusted."""
-    return (
-        f'<div class="tc-empty">{_EMPTY_ICON}<div><h4>{_e(title)}</h4>'
-        f"<p>{body_html}</p></div></div>"
-    )
-
-
-def prose_sections(sections: Sequence[tuple[str, str]]) -> str:
-    """Numbered long-form sections; each body is trusted markup."""
-    parts = "".join(
-        f"<section><span>{i + 1:02d}</span><div><h4>{_e(title)}</h4>{body}</div></section>"
-        for i, (title, body) in enumerate(sections)
-    )
-    return f'<div class="tc-prose">{parts}</div>'
-
-
-def footer(left: str, right: str) -> str:
-    """Thin mono footer line."""
-    return f'<div class="tc-foot"><span>{_e(left)}</span><span>{_e(right)}</span></div>'
-

@@ -7,7 +7,6 @@ import plotly.graph_objects as go
 from ..config import ScenarioConfig
 from ..models import Corridor, SimulationResult
 from . import (
-    COLOR_BG,
     COLOR_FAINT,
     COLOR_FORWARD,
     COLOR_GREEN,
@@ -15,7 +14,7 @@ from . import (
     COLOR_RED,
     COLOR_REVERSE,
     COLOR_ROAD,
-    FONT_MONO,
+    COLOR_SURFACE,
     base_layout,
 )
 from .trajectory import vehicle_position_series
@@ -71,7 +70,7 @@ def corridor_figure(
             y=-24,
             text=f"{d:.0f} m",
             showarrow=False,
-            font=dict(family=FONT_MONO, size=10, color=COLOR_FAINT),
+            font=dict(size=10, color=COLOR_FAINT),
         )
 
     # signals as markers colored by state at time_s
@@ -84,17 +83,17 @@ def corridor_figure(
                 x=[positions[i]],
                 y=[0],
                 mode="markers+text",
-                text=[f"I{i + 1}<br>O={offset:.0f}s"],
+                text=[f"Light {i + 1}<br>+{offset:g} s"],
                 textposition="top center",
-                textfont=dict(family=FONT_MONO, size=11, color=COLOR_MUTED),
+                textfont=dict(size=11, color=COLOR_MUTED),
                 marker=dict(
                     size=22,
                     color=COLOR_GREEN if green else COLOR_RED,
-                    line={"width": 4, "color": COLOR_BG},
+                    line={"width": 4, "color": COLOR_SURFACE},
                 ),
-                name=f"I{i + 1}",
+                name=f"Light {i + 1}",
                 hovertemplate=(
-                    f"I{i + 1} · offset {offset:.0f} s<br>"
+                    f"Light {i + 1} · green starts +{offset:g} s<br>"
                     f"{('green' if green else 'red')} at t={time_s:.1f} s<extra></extra>"
                 ),
                 showlegend=False,
@@ -114,12 +113,12 @@ def corridor_figure(
                     size=12,
                     color=COLOR_FORWARD if trace.direction == "forward" else COLOR_REVERSE,
                     symbol="triangle-right" if trace.direction == "forward" else "triangle-left",
-                    line={"width": 1, "color": COLOR_BG},
+                    line={"width": 1, "color": COLOR_SURFACE},
                 ),
                 name=f"vehicle {trace.vehicle_id}",
                 hovertemplate=(
-                    f"v{trace.vehicle_id} ({trace.direction})<br>"
-                    f"stops={trace.stops}, wait={trace.total_wait:.0f} s<extra></extra>"
+                    f"Car {trace.vehicle_id + 1}: {trace.stops} stop(s), "
+                    f"{trace.total_wait:.0f} s waiting<extra></extra>"
                 ),
                 showlegend=False,
             )
@@ -127,11 +126,12 @@ def corridor_figure(
 
     fig.layout.update(
         base_layout(
-            title=f"t = {time_s:.0f} s",
+            title=None,
+            margin={"l": 24, "r": 24, "t": 16, "b": 36},
             showlegend=False,
         )
     )
-    fig.update_xaxes(title=None, ticksuffix=" m", showgrid=False)
-    fig.update_yaxes(visible=False, range=[-60, 60])
-    fig.update_layout(height=300)
+    fig.update_xaxes(title=None, ticksuffix=" m", showgrid=False, zeroline=False)
+    fig.update_yaxes(visible=False, range=[-50, 50])
+    fig.update_layout(height=240)
     return fig

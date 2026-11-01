@@ -56,7 +56,6 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["D"]
-"app.py" = ["D"]
 "tools/*" = ["D"]
 # Prose content lives in long string blocks; reflowing it would break nothing
 # but massively diff the single content source shared by DOCX and PDF.
@@ -64,6 +63,9 @@ ignore = [
 "tools/build_slides.py" = ["E501"]
 # The dashboard stylesheet is one CSS string; one rule per line reads better than wrapping.
 "src/traffic_coordination/ui_theme.py" = ["E501"]
+# Page modules are mostly reader-facing copy and table rows; wrapping them hurts more than it helps.
+"src/traffic_coordination/dashboard/*" = ["E501"]
+"app.py" = ["D", "E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

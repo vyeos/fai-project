@@ -6,12 +6,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Changed
-- Dashboard redesign: dark theme, Geist type, one accent colour, a masthead that runs the
-  current timing plan, a comparison ledger, and composed empty and error states.
+- Dashboard rebuilt as four pages (Try it, How it works, Experiments, Under the hood) with
+  top navigation, no sidebar and no footer. "Try it" comes first: describe a road in plain
+  terms and get the timing plan, per-car savings and side-by-side time-space diagrams.
+- New light design system (IBM Plex, one accent blue for the optimized plan) shared by the
+  Streamlit theme, the stylesheet and every chart; every page explains its numbers in
+  plain language using one vocabulary.
+- Search-trace charts and event table use plain-language event names.
 - Minimum Streamlit version raised to 1.50 for the theming APIs.
 
 ### Fixed
 - Invalid-scenario message no longer repeats "Invalid scenario configuration".
+- Corridor drawings placed reverse-direction vehicles using the wrong visit order.
 
 ### Removed
 - GitHub Actions workflow. Lint and tests now run locally before every push.

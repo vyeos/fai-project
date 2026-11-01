@@ -2,24 +2,19 @@
 # src/traffic_coordination/visualization/__init__.py and ui_theme.py.
 
 [theme]
-base = "dark"
-primaryColor = "#e2a340"
-backgroundColor = "#0c0e11"
-secondaryBackgroundColor = "#15181d"
-textColor = "#e4e6e9"
-linkColor = "#e2a340"
-borderColor = "#252a31"
+base = "light"
+primaryColor = "#2457d6"
+backgroundColor = "#f6f6f2"
+secondaryBackgroundColor = "#efefea"
+textColor = "#17191c"
+linkColor = "#2457d6"
+borderColor = "#e2e2dc"
 showWidgetBorder = true
-baseRadius = "6px"
-font = "Geist:https://fonts.googleapis.com/css2?family=Geist:wght@300..700&display=swap"
-codeFont = "Geist Mono:https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400..600&display=swap"
-codeBackgroundColor = "#15181d"
-dataframeHeaderBackgroundColor = "#111418"
-
-[theme.sidebar]
-backgroundColor = "#0f1114"
-secondaryBackgroundColor = "#171a1f"
-borderColor = "#22262c"
+baseRadius = "8px"
+font = "IBM Plex Sans:https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+codeFont = "IBM Plex Mono:https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap"
+codeBackgroundColor = "#efefea"
+dataframeHeaderBackgroundColor = "#efefea"
 
 [client]
 toolbarMode = "minimal"

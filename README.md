@@ -29,13 +29,20 @@ enough.
 > incomplete experiments (e.g. exhaustive verification of very large spaces)
 > are recorded as such rather than faked.
 
-## Screenshots (captured from a live session, dashboard defaults: N = 5, ±10 s tolerance)
+## Dashboard
 
-| | |
+`python -m streamlit run app.py` opens four pages, written so someone who has
+never seen the project can follow them:
+
+| Page | What you do there |
 |---|---|
-| ![Overview and last run](docs/screenshots/01_overview_last_run.png) | ![Corridor t=57 s](docs/screenshots/03_corridor_t57_vehicles.png) |
-| ![Signal timeline](docs/screenshots/04_signals_timeline.png) | ![Results + verification](docs/screenshots/05b_results_verification_plan.png) |
-| ![Search trace](docs/screenshots/06b_search_trace_charts.png) | ![Sensitivity sweep](docs/screenshots/07_sensitivity_sweep.png) |
+| **Try it** | Describe a road (number of lights, distance, speed limit, traffic, directions, arrivals; cycle, green time and optimizer rules are optional). The model returns when each light should turn green, how much waiting and stopping it saves per car, side-by-side time-space diagrams, and the three strategies compared. |
+| **How it works** | The problem, a seven-term glossary, the simulator's rules, the three strategies and the CSP search, all quoting the numbers from your last run. |
+| **Experiments** | Saved benchmark roads A–E, plus a live sweep that varies one factor of your road (traffic, speed, number of lights, distance). |
+| **Under the hood** | The brute-force check of the optimum, every search counter with its meaning, the recorded search steps, downloads and the full settings. |
+
+The screenshots in `docs/screenshots/` show the earlier nine-tab dashboard used
+in the submitted report and slides.
 
 ## Quickstart
 
@@ -57,12 +64,12 @@ python -m streamlit run app.py
 
 | Task | Command |
 |---|---|
-| Dashboard (9 tabs) | `python -m streamlit run app.py` |
+| Dashboard (4 pages) | `python -m streamlit run app.py` |
 | Full benchmark suite (A–E + F/G/H/J) | `python -m traffic_coordination.experiments.benchmark_runner --all` |
 | Main scenarios only | `... --main` |
 | One scenario | `... --scenario B` |
 | Sensitivity scenarios only | `... --sensitivity` |
-| Test suite (81 tests) | `pytest` |
+| Test suite (86 tests) | `pytest` |
 | Lint | `ruff check src tests app.py tools` |
 | Pre-push check (no hosted CI) | `ruff check src tests app.py tools && pytest` |
 
@@ -92,7 +99,7 @@ the implemented bound `h(s) = 0` is admissible but weak.
   semantics, algorithm detail, verification, data flow, dashboard design.
 - [`docs/viva_questions.md`](docs/viva_questions.md) — 42 viva questions with
   answers grounded in measured results.
-- [`docs/screenshots/`](docs/screenshots/) — 15 live-verified UI screenshots.
+- [`docs/screenshots/`](docs/screenshots/) — 15 screenshots of the earlier nine-tab dashboard.
 - [`CHANGELOG.md`](CHANGELOG.md) · [`CITATION.cff`](CITATION.cff) ·
   [`CONTRIBUTING.md`](CONTRIBUTING.md)
 

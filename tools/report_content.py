@@ -5,8 +5,9 @@ Block grammar:
     ("h1"|"h2", text)                    headings
     ("p"|"note", text)                   paragraph / italic note
     ("bullets", [str, ...])              bullet list
-    ("table", caption, headers, rows)    data table (headers + list of rows)
-    ("figure", relpath, caption)         image (path relative to repo root)
+    ("table", caption, headers, rows)    data table (headers + list of rows); numbered by the builder
+    ("figure", relpath, caption)         image (path relative to repo root); numbered by the builder
+    ("cover", [(label, value | [values])]) cover-page details table
     ("code", [str, ...])                 monospace block
     ("pagebreak",)                       page break
 
@@ -27,17 +28,19 @@ BLOCKS: list[tuple] = [
     ("title", REPORT_TITLE),
     ("subtitle", REPORT_SUBTITLE),
 
-    ("table", "Cover metadata (unknown values are honest placeholders)", ["Field", "Value"], [
-        ["Course", "ECSCT24301 — Foundation of AI (Applied AI project track)"],
-        ["Institution", "Adani University, AY 2026–27"],
-        ["Team", "Rudra Patel (2410111118), Pruthvi Navadiya (2410111071)"],
-        ["Supervisor", "[placeholder — to be filled upon assignment]"],
-        ["Submission date", "[placeholder — to be filled at submission]"],
-        ["Results provenance", "All numbers measured in simulation (repository experiments/results); illustrative textbook numbers are labelled as such"],
+    ("cover", [
+        ("Course", "ECSCT24301 — Foundation of AI (Applied AI project track)"),
+        ("Submitted By", ["Rudra Patel (2410111118)", "Pruthvi Navadiya (2410111071)"]),
+        ("Branch", "B. Tech CSE (AI-ML)"),
+        ("Institution", "Adani University"),
+        ("Academic Year", "AY 2026–27"),
+        ("Supervisor", "[placeholder — to be filled upon assignment]"),
+        ("Submission date", "[placeholder — to be filled at submission]"),
     ]),
 
     ("h1", "Abstract"),
     ("p", "Traffic signals along an arterial corridor are usually timed independently, so platoons released at one green window arrive at the next signal during red and stop unnecessarily. We formulate offset selection for a chain of N signalized intersections as a finite constraint satisfaction problem: variables are green-window offsets on a discrete grid, the objective is the weighted sum of total waiting time and total stops evaluated by a deterministic corridor simulator. We compare an uncoordinated baseline (all offsets zero), a greedy one-way progression heuristic, and a CSP optimizer combining backtracking search, forward checking and branch and bound with an admissible (but weak) h(s) = 0 bound. All three algorithms are scored by one shared simulator on identical generated demand, and the CSP's claimed optimum is cross-checked by an independently written exhaustive verifier wherever the search space allows. On our default five-intersection, medium-demand scenario the measured objective falls from J = 3780 (uncoordinated) to J = 618 (CSP), an 83.7% improvement that independent verification over all 20 736 feasible plans confirms. The project is delivered as a tested, linted Python package (86 pytest tests, ruff-clean), a reproducible benchmark suite with archived CSV/JSON results and seven figures, a four-page plain-language Streamlit dashboard verified live in a browser, and lint and tests run locally before every push."),
+    ("note", "Results provenance: all numbers are measured in simulation (repository experiments/results); illustrative textbook numbers are labelled as such."),
     ("note", "Keywords: constraint satisfaction, backtracking, forward checking, branch and bound, traffic signal coordination, arterial progression, deterministic simulation."),
 
     ("h1", "1. Introduction"),
@@ -108,17 +111,17 @@ BLOCKS: list[tuple] = [
     ("p", "Solver budgets are fixed in the dashboard (30 s and 250 000 plan evaluations); if either trips, the badge reads 'Best plan found before the time limit (not proven best)' instead of claiming optimality. Brute-force verification runs whenever the road has at most 250 000 plans and is otherwise reported as skipped with the reason. Invalid road descriptions (for example a green time longer than the cycle) produce a red notice that explains the problem in words while the previous valid result stays on screen."),
     ("h2", "5.4 Dashboard walkthrough (live screenshots)"),
     ("p", "The screenshots below were captured from a live session on the default road: five lights 400 m apart, 40 km/h, 20 cars each way released in a bunch, cycle 60 s, green 30 s, 5 s timing step and the ±10 s green-wave rule switched on. Under that rule the CSP scores 256 of the 20 736 possible plans, proves the plan O = (0, 40, 10, 40, 15) optimal at J = 618, and the independent verifier agrees over all 256 allowed plans. (Benchmark scenario B in Section 6 runs the same road with the rule switched off and reaches the same J = 618 over all 20 736 plans.)"),
-    ("figure", "docs/screenshots/01_try_it_form.png", "Screenshot 1 — Try it: the road form, the plain-language headline (an average car waits 14 s instead of 86 s), the proof badge and per-car statistics."),
-    ("figure", "docs/screenshots/02_try_it_plan.png", "Screenshot 2 — Try it: the timing plan as animated lights and a table comparing each offset with the 36 s driving time."),
-    ("figure", "docs/screenshots/03_try_it_time_space.png", "Screenshot 3 — Try it: time-space diagrams. Without coordination the platoons run flat along red bars (waiting); with the optimized plan both directions slide through."),
-    ("figure", "docs/screenshots/04_try_it_strategies.png", "Screenshot 4 — Try it: the three strategies scored on identical cars (3 780, 830, 618); the optimized plan is outlined as best."),
-    ("figure", "docs/screenshots/06_how_terms.png", "Screenshot 5 — How it works: the seven-term glossary, filled with the reader's own values."),
-    ("figure", "docs/screenshots/08_how_search.png", "Screenshot 6 — How it works: the CSP explained step by step (unknowns and choices, the green-wave rule, backtracking, forward checking, branch and bound)."),
-    ("figure", "docs/screenshots/09_experiments_roads.png", "Screenshot 7 — Experiments: the saved benchmark roads A to E with their verification status."),
-    ("figure", "docs/screenshots/10_experiments_sweep.png", "Screenshot 8 — Experiments: a live traffic sweep; the optimized plan cuts average waiting by 81–100% against no coordination."),
-    ("figure", "docs/screenshots/11_hood_check.png", "Screenshot 9 — Under the hood: 'Yes, confirmed' — brute force over 256 allowed plans gives the same best score, 618."),
-    ("figure", "docs/screenshots/12_hood_effort.png", "Screenshot 10 — Under the hood: every search counter with its meaning (256 plans scored, 341 values tried, 680 ruled out ahead, 0 skipped by bound)."),
-    ("figure", "docs/screenshots/13_hood_trace.png", "Screenshot 11 — Under the hood: the recorded search trace; climbing the 'light being timed' axis is going deeper in the tree, dropping back is backtracking."),
+    ("figure", "docs/screenshots/01_try_it_form.png", "Try it: the road form, the plain-language headline (an average car waits 14 s instead of 86 s), the proof badge and per-car statistics."),
+    ("figure", "docs/screenshots/02_try_it_plan.png", "Try it: the timing plan as animated lights and a table comparing each offset with the 36 s driving time."),
+    ("figure", "docs/screenshots/03_try_it_time_space.png", "Try it: time-space diagrams. Without coordination the platoons run flat along red bars (waiting); with the optimized plan both directions slide through."),
+    ("figure", "docs/screenshots/04_try_it_strategies.png", "Try it: the three strategies scored on identical cars (3 780, 830, 618); the optimized plan is outlined as best."),
+    ("figure", "docs/screenshots/06_how_terms.png", "How it works: the seven-term glossary, filled with the reader's own values."),
+    ("figure", "docs/screenshots/08_how_search.png", "How it works: the CSP explained step by step (unknowns and choices, the green-wave rule, backtracking, forward checking, branch and bound)."),
+    ("figure", "docs/screenshots/09_experiments_roads.png", "Experiments: the saved benchmark roads A to E with their verification status."),
+    ("figure", "docs/screenshots/10_experiments_sweep.png", "Experiments: a live traffic sweep; the optimized plan cuts average waiting by 81–100% against no coordination."),
+    ("figure", "docs/screenshots/11_hood_check.png", "Under the hood: 'Yes, confirmed' — brute force over 256 allowed plans gives the same best score, 618."),
+    ("figure", "docs/screenshots/12_hood_effort.png", "Under the hood: every search counter with its meaning (256 plans scored, 341 values tried, 680 ruled out ahead, 0 skipped by bound)."),
+    ("figure", "docs/screenshots/13_hood_trace.png", "Under the hood: the recorded search trace; climbing the 'light being timed' axis is going deeper in the tree, dropping back is backtracking."),
 
     ("h2", "5.5 Dashboard words and the AI terms behind them"),
     ("table", "Plain-language labels used in the dashboard", ["Dashboard word", "Technical term in this report"], [
@@ -154,8 +157,8 @@ BLOCKS: list[tuple] = [
         ["D", "10406.0", "2525.0", "2078.0", "80.0%", "proven optimal; verified (20 736 plans)"],
         ["E", "3780.0", "850.0", "605.0", "84.0%", "proven optimal in tolerant space; raw-space verification skipped"],
     ]),
-    ("figure", "experiments/figures/fig1_waiting_by_scenario.png", "Figure 1 — Total simulated waiting time by algorithm across the main scenarios."),
-    ("figure", "experiments/figures/fig2_stops_by_scenario.png", "Figure 2 — Total simulated stops by algorithm across the main scenarios."),
+    ("figure", "experiments/figures/fig1_waiting_by_scenario.png", "Total simulated waiting time by algorithm across the main scenarios."),
+    ("figure", "experiments/figures/fig2_stops_by_scenario.png", "Total simulated stops by algorithm across the main scenarios."),
     ("p", "Two qualitative observations. First, greedy captures most of the benefit on forward-only direction modes and light demand, but its fixed one-way progression rule can actively hurt the reverse direction: on scenario H1 (10 s headway platoon) greedy J = 2246 is worse than uncoordinated J = 1828, while the CSP finds J = 409. Second, on near-ideal progression regimes (H2, 5 s headway) the corridor is almost saturated on timing potential and the CSP's J = 24 against 1008.8 uncoordinated reflects the model's strength at clear platoons rather than a field-realistic gain."),
     ("h2", "6.3 Search statistics (measured)"),
     ("table", "CSP search behaviour", ["Scenario", "Evaluated plans", "Nodes", "Forward-check removals", "B&B prunes", "Search time (s)", "Status"], [
@@ -164,15 +167,15 @@ BLOCKS: list[tuple] = [
         ["C", "4 096 (of 2 985 984 raw)", "1365", "10 920", "0", "0.35", "proven optimal in tolerant space"],
         ["E", "194 481 (of 12 960 000 raw)", "9724", "379 236", "0", "12.40", "proven optimal in tolerant space"],
     ]),
-    ("figure", "experiments/figures/fig3_runtime_nodes_vs_size.png", "Figure 3 — Search work versus corridor size / resolution."),
+    ("figure", "experiments/figures/fig3_runtime_nodes_vs_size.png", "Search work versus corridor size / resolution."),
     ("p", "The honest negative result: because the implemented lower bound h(s) = 0 never beats an incumbent, branch-and-bound prunes are exactly zero everywhere. Forward-checking eliminations, in contrast, are real and large exactly where the tolerance constraint exists. On scenario B (vacuous constraint) the CSP is effectively a structured exhaustive enumeration completing in about 1.4 s (≈ 12 000 plan evaluations/s) — the honest description of an exact search over a small space."),
     ("h2", "6.4 Independent verification"),
     ("p", "Exhaustive verification matched the CSP optimum on every scenario where it ran: A (144 plans), B, D, F1–F3, H1, H2, J1, J2 (20 736 each), G1 (256 of 20 736, tolerance-restricted) and G2 (194 481 of 12 960 000, tolerance-restricted). C and E are recorded as skipped with their raw-space sizes stated. The practice mirrors truthtelling obligations in the course: never claim optimality that was not checked or search-proven."),
     ("h2", "6.5 Sensitivity analyses"),
-    ("figure", "experiments/figures/fig5_demand_sensitivity.png", "Figure 5 — Objective versus demand level (F-family)."),
-    ("figure", "experiments/figures/fig6_resolution_sensitivity.png", "Figure 6 — Objective versus offset resolution (G-family): a finer grid improves J substantially but costs about 8× more evaluation work."),
-    ("figure", "experiments/figures/fig7_speed_sensitivity.png", "Figure 7 — Objective versus nominal link speed (H-family)."),
-    ("figure", "experiments/figures/fig8_weights_sensitivity.png", "Figure 8 — Objective versus stop weight β (J-family): the same plan stays optimal because it improves W and S simultaneously."),
+    ("figure", "experiments/figures/fig5_demand_sensitivity.png", "Objective versus demand level (F-family)."),
+    ("figure", "experiments/figures/fig6_resolution_sensitivity.png", "Objective versus offset resolution (G-family): a finer grid improves J substantially but costs about 8× more evaluation work."),
+    ("figure", "experiments/figures/fig7_speed_sensitivity.png", "Objective versus nominal link speed (H-family)."),
+    ("figure", "experiments/figures/fig8_weights_sensitivity.png", "Objective versus stop weight β (J-family): the same plan stays optimal because it improves W and S simultaneously."),
     ("p", "The design-sweep messages: (i) coordination's relative benefit persists at all measured demand levels; (ii) resolution is expensive — going from 5 s to 1 s multiplied the evaluated space by about 9.4× and runtime from ≈ 1.4 s to ≈ 12.4 s even with the tolerance constraint; (iii) the weight change (J1 vs J2) leaves the chosen plan unchanged — evidence that the plan dominates on both objectives simultaneously rather than trading one against the other."),
 
     ("h1", "7. Discussion and limitations"),

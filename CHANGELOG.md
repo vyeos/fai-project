@@ -14,7 +14,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   plain language using one vocabulary.
 - Search-trace charts and event table use plain-language event names.
 - Minimum Streamlit version raised to 1.50 for the theming APIs.
-- Slides rewritten as a 33-slide read-along deck for readers new to AI: the problem, what
+- Slides rewritten as a 15-slide read-along deck for readers new to AI: the problem, what
   classical AI is, FAI vocabulary mapped to the dashboard's words, how the CSP search is
   built into the project, results and limits. Every slide names the dashboard page and
   section to open alongside it; colours follow the dashboard tokens. Speaker notes are

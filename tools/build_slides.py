@@ -227,20 +227,6 @@ class Deck:
             pill(slide, S_W - MARGIN - width, Inches(0.38), label, size=10.5, w=width)
         return slide
 
-    def divider(self, number: str, title: str, subtitle: str):
-        """Section divider slide."""
-        slide = self.prs.slides.add_slide(self.prs.slide_layouts[6])
-        self.count += 1
-        rect(slide, 0, 0, S_W, S_H, fill=SURFACE, line=None, shape=MSO_SHAPE.RECTANGLE)
-        rect(slide, 0, 0, Inches(0.22), S_H, fill=ACCENT, line=None, shape=MSO_SHAPE.RECTANGLE)
-        text(slide, Inches(1.2), Inches(2.3), Inches(3), Inches(1.2), number, size=66,
-             color=ACCENT, bold=True)
-        text(slide, Inches(1.2), Inches(3.55), Inches(10.5), Inches(0.9), title, size=40,
-             bold=True).name = "Title"
-        text(slide, Inches(1.2), Inches(4.45), Inches(10.5), Inches(1.0), subtitle, size=18,
-             color=MUTED)
-        return slide
-
 
 def card(slide, x, y, w, h, title, body, tag=None, tag_tone="accent", title_size=16,
          body_size=13, fill=SURFACE, border=LINE):
@@ -360,88 +346,18 @@ def build() -> Presentation:
     text(s, Inches(8.8), Inches(3.6), Inches(3.9), Inches(0.8),
          "A green wave: every light turns green just as the cars from the light before arrive.",
          size=12, color=MUTED, align=PP_ALIGN.CENTER)
+    pill(s, Inches(8.8), Inches(5.0), "On the website  ›  Page › Section", size=10.5)
+    text(s, Inches(8.8), Inches(5.45), Inches(3.9), Inches(0.9),
+         "Read with the dashboard open: this tag on each slide names the page and section that "
+         "shows the same idea live.", size=12, color=MUTED)
     notes(s, (
         "This deck is meant to be read next to the website. Every slide has a blue tag in the top "
         "right that tells you which page and section of the dashboard shows the same idea. Open "
         "the dashboard (python -m streamlit run app.py) and keep it beside the slides."
     ))
 
-    # 2. How to read this deck ---------------------------------------------
-    s = d.slide("Start here", "How to read this deck with the website",
-                lede="Open the dashboard next to these slides. The website has four pages, read left to right.")
-    pages = [
-        ("Try it", "Describe a road and get the best timings, the savings per car and a "
-                   "picture of the traffic.", "Slides 4–7, 26–27"),
-        ("How it works", "The problem, seven words, how a plan is scored and how the search "
-                         "works, with your numbers.", "Slides 5, 13–23"),
-        ("Experiments", "Five saved test roads and a live comparison that varies one thing "
-                        "at a time.", "Slide 28"),
-        ("Under the hood", "Was the answer double-checked, how much searching it took, the "
-                           "search step by step.", "Slides 21–24, 29"),
-    ]
-    cw = (CONTENT_W - 3 * Inches(0.25)) / 4
-    for i, (name, body, where) in enumerate(pages):
-        x = MARGIN + i * (cw + Inches(0.25))
-        card(s, x, TOP + Inches(0.2), cw, Inches(2.6), name, body, tag=f"Page {i + 1}")
-        text(s, x + Inches(0.22), TOP + Inches(2.35), cw, Inches(0.3), where, size=11, color=ACCENT,
-             bold=True)
-    rect(s, MARGIN, Inches(5.05), CONTENT_W, Inches(1.45), fill=SURFACE, line=LINE)
-    text(s, MARGIN + Inches(0.3), Inches(5.25), Inches(3.2), Inches(1.1),
-         "The deck is in six parts", size=16, bold=True)
-    text(s, MARGIN + Inches(3.3), Inches(5.22), Inches(8.5), Inches(1.2), [
-        "**1** The problem   **2** What AI means in this course   **3** FAI vocabulary",
-        "**4** How AI is built into the project   **5** Results   **6** Limits and recap",
-    ], size=14, color=MUTED, spacing=8)
-    pill(s, MARGIN, Inches(4.62), "On the website  ›  Page › Section", size=10.5)
-    text(s, MARGIN + Inches(3.0), Inches(4.65), Inches(5.5), Inches(0.3),
-         "This tag on each slide tells you where to look.", size=12, color=MUTED)
-    notes(s, (
-        "Read the slides in order. When a slide shows the 'On the website' tag, switch to that page "
-        "and scroll to the named section: the website shows the same idea with live numbers. The "
-        "default road on the website is the one used throughout this deck."
-    ))
-
-    # ---------------------------------------------------------------- Part 1
-    s = d.divider("1", "The problem", "Why cars keep stopping at red lights, and what we want to fix.")
-    notes(s, "Part 1 explains the real-world problem in plain words before any AI is introduced.")
-
-    # 4. Everyday problem
-    s = d.slide("Part 1 · The problem", "Red light, drive, red light again",
-                web="Try it › headline",
-                lede="One straight road with five traffic lights, 400 m apart, speed limit 40 km/h.")
-    road_y = Inches(3.35)
-    line(s, MARGIN + Inches(0.3), road_y, S_W - MARGIN - Inches(0.3), road_y, color=GREY, width=8)
-    xs = [MARGIN + Inches(0.5) + i * Inches(2.72) for i in range(5)]
-    for i, x in enumerate(xs):
-        traffic_light(s, x, Inches(2.35), "red" if i else "green")
-        text(s, x - Inches(0.3), Inches(3.55), Inches(0.95), Inches(0.3), f"Light {i + 1}",
-             size=12, bold=True, align=PP_ALIGN.CENTER)
-        if i < 4:
-            text(s, x + Inches(0.5), Inches(2.95), Inches(1.9), Inches(0.3), "400 m · 36 s drive",
-                 size=11, color=MUTED, align=PP_ALIGN.CENTER)
-    stats = [
-        ("86.5 s", "average waiting per car when the lights are not coordinated"),
-        ("4.0", "stops per car: almost every light is red when the car gets there"),
-        ("40", "cars in the test: 20 driving up the road, 20 driving down"),
-    ]
-    sw = (CONTENT_W - 2 * Inches(0.25)) / 3
-    for i, (value, label) in enumerate(stats):
-        x = MARGIN + i * (sw + Inches(0.25))
-        rect(s, x, Inches(4.35), sw, Inches(1.85))
-        text(s, x + Inches(0.25), Inches(4.5), sw, Inches(0.7), value, size=34, bold=True,
-             color=RED if i < 2 else TEXT)
-        text(s, x + Inches(0.25), Inches(5.25), sw - Inches(0.5), Inches(0.8), label, size=13,
-             color=MUTED)
-    notes(s, (
-        "Picture driving down a city road: you pass one green light and then hit red at every light "
-        "after it. On our default road, with the lights not coordinated, an average car waits 86.5 "
-        "seconds and stops 4 times on a 5-light trip. That wasted time, fuel and braking is the "
-        "problem the project solves. On the website, the 'Try it' page headline says 'waits 14 s "
-        "instead of 86 s': the 86 is this number."
-    ))
-
     # 5. Why it happens
-    s = d.slide("Part 1 · The problem", "Why it happens: every light turns green together",
+    s = d.slide("The problem", "Why it happens: every light turns green together",
                 web="How it works › The problem")
     gx, gw = signal_bars(s, MARGIN, TOP + Inches(0.1), Inches(7.3), [0, 0, 0, 0, 0])
     car_x = gx + Emu(int(gw * 36 / 180))
@@ -455,9 +371,12 @@ def build() -> Presentation:
         "At 36 s Light 2 is already **red**. The car stops and waits until 60 s.",
         "The same thing happens at Light 3, 4 and 5.",
     ], body_size=14)
-    text(s, MARGIN, Inches(5.55), Inches(7.3), Inches(0.7),
-         "Green bar = light is green, red bar = light is red. Every row is the same, so the "
-         "lights are not helping each other.", size=12, color=MUTED)
+    text(s, MARGIN, Inches(5.3), Inches(7.3), Inches(0.3),
+         "Green bar = light is green, red bar = light is red. Every row is the same.",
+         size=12, color=MUTED)
+    text(s, MARGIN, Inches(5.75), Inches(7.3), Inches(0.6),
+         "Result on the default road (5 lights, 400 m apart, 40 km/h, 40 cars): an average car "
+         "waits **86.5 s** and stops **4.0 times**.", size=14, color=RED)
     notes(s, (
         "This is the core of the problem. The timing bars show 3 minutes of five lights that all "
         "start green at the same moment. Driving between lights takes 36 seconds, but the green "
@@ -466,7 +385,7 @@ def build() -> Presentation:
     ))
 
     # 6. The fix
-    s = d.slide("Part 1 · The problem", "The fix: delay each light's green (a green wave)",
+    s = d.slide("The problem", "The fix: delay each light's green (a green wave)",
                 web="Try it › When each light turns green")
     signal_bars(s, MARGIN, TOP + Inches(0.1), Inches(7.3), [0, 40, 10, 40, 15],
                 labels=["Light 1  +0", "Light 2  +40", "Light 3  +10", "Light 4  +40", "Light 5  +15"],
@@ -486,11 +405,11 @@ def build() -> Presentation:
         "time, measured from Light 1, is called the offset. One offset per light is a timing plan. "
         "The 'Try it' page shows this plan as animated lights and a table that compares each "
         "offset with the 36 s driving time. Why +40 and not +36? Because cars drive in both "
-        "directions and the plan has to suit both; slide 7 explains why that is hard."
+        "directions and the plan has to suit both; the next slide explains why that is hard."
     ))
 
     # 7. Why hard
-    s = d.slide("Part 1 · The problem", "Why we need AI: too many plans to check by hand",
+    s = d.slide("The problem", "Why we need AI: too many plans to check by hand",
                 web="How it works › Unknowns and their choices")
     rows = [
         ("Choices per light", "12", "offsets 0, 5, 10, … 55 s (a 5 s step)"),
@@ -516,174 +435,80 @@ def build() -> Presentation:
         "and a PROOF that it is best, which is exactly what classical AI search gives us."
     ))
 
-    # ---------------------------------------------------------------- Part 2
-    s = d.divider("2", "What 'AI' means in this course",
-                  "Foundations of AI is about agents that solve problems by searching and reasoning, "
-                  "not about training neural networks.")
-    notes(s, "Part 2 explains what kind of AI this is, so the vocabulary in Part 3 makes sense.")
-
-    # 9. Classical vs ML
-    s = d.slide("Part 2 · AI in this course", "Classical AI vs machine learning")
-    card(s, MARGIN, TOP + Inches(0.1), Inches(5.85), Inches(3.9), "Classical AI  (this project)", [
-        "The problem is written down exactly: the unknowns, their choices and the rules.",
-        "A search algorithm explores the choices and **proves** which one is best.",
-        "No training data, no learning, no guessing. Same input → same answer.",
-        "Course topics: agents, search, heuristics, **constraint satisfaction**, logic.",
-    ], tag="What we use", tag_tone="accent", body_size=14, border=ACCENT)
-    card(s, MARGIN + Inches(6.28), TOP + Inches(0.1), Inches(5.85), Inches(3.9),
-         "Machine learning  (not used here)", [
-             "Learns patterns from lots of example data, for example camera footage of traffic.",
-             "Gives a good guess, usually without a guarantee it is the best.",
-             "Needs data we do not have and is hard to explain step by step.",
-             "Useful for prediction; overkill when the rules are known.",
-         ], tag="Not used", tag_tone="grey", body_size=14)
-    text(s, MARGIN, Inches(5.95), CONTENT_W, Inches(0.6),
-         "Rule of thumb: when you can write down the rules and the goal exactly, classical search "
-         "can find the best answer and prove it.", size=14, color=TEXT, bold=True)
-    notes(s, (
-        "People often hear 'AI' and think of ChatGPT or self-driving cars, which use machine "
-        "learning. Foundations of AI starts earlier: with problems you can describe exactly, solved "
-        "by searching through possibilities in a smart way. Our project is entirely classical AI. "
-        "There is no training data and no randomness in the answer: the same road always gives the "
-        "same plan."
-    ))
-
-    # 10. Agent / PEAS
-    s = d.slide("Part 2 · AI in this course", "Our project as an AI agent (PEAS)",
-                lede="An agent perceives its environment and acts to reach a goal. PEAS lists its four parts.")
+    # Classical AI, the agent and its environment
+    s = d.slide("Classical AI", "What kind of AI this is",
+                lede="Foundations of AI is about agents that solve exactly described problems by "
+                     "searching, not about training neural networks.")
+    card(s, MARGIN, TOP + Inches(0.05), Inches(5.85), Inches(2.3), "Classical AI  (this project)", [
+        "Rules and goal are written down exactly; a search **proves** which plan is best.",
+        "No training data, no guessing: the same road always gives the same plan.",
+    ], tag="What we use", body_size=13, border=ACCENT)
+    card(s, MARGIN + Inches(6.28), TOP + Inches(0.05), Inches(5.85), Inches(2.3),
+         "Machine learning  (not used)", [
+             "Learns patterns from lots of example data and gives a good guess.",
+             "Needs data we do not have, and usually no guarantee of the best answer.",
+         ], tag="Not used", tag_tone="grey", body_size=13)
     peas = [
-        ("P", "Performance measure", "The **score**: total waiting seconds + 2 × number of stops. "
-                                     "Lower is better."),
-        ("E", "Environment", "A simulated straight road with N lights and a fixed set of cars "
-                             "driving both ways."),
-        ("A", "Actuators", "Setting the **offset** of each light, which is the timing plan."),
-        ("S", "Sensors", "The simulator's report for a plan: each car's waiting time and stops."),
+        ("P", "Performance", "The **score**: waiting + 2 × stops, lower is better."),
+        ("E", "Environment", "A simulated road with N lights and fixed cars both ways."),
+        ("A", "Actuators", "Choosing the **offset** of each light (the timing plan)."),
+        ("S", "Sensors", "The simulator's report: each car's waiting and stops."),
     ]
+    text(s, MARGIN, TOP + Inches(2.5), CONTENT_W, Inches(0.3),
+         "Our project as an AI agent (PEAS, from the textbook)", size=14, bold=True)
     pw = (CONTENT_W - 3 * Inches(0.25)) / 4
     for i, (letter, name, body) in enumerate(peas):
         x = MARGIN + i * (pw + Inches(0.25))
-        rect(s, x, TOP + Inches(0.15), pw, Inches(3.3))
-        text(s, x + Inches(0.25), TOP + Inches(0.3), pw, Inches(0.8), letter, size=40, bold=True,
-             color=ACCENT)
-        text(s, x + Inches(0.25), TOP + Inches(1.15), pw - Inches(0.4), Inches(0.4), name, size=16,
+        y = TOP + Inches(2.9)
+        rect(s, x, y, pw, Inches(1.35))
+        text(s, x + Inches(0.2), y + Inches(0.12), Inches(0.5), Inches(0.6), letter, size=28,
+             bold=True, color=ACCENT)
+        text(s, x + Inches(0.75), y + Inches(0.22), pw - Inches(0.9), Inches(0.35), name, size=14,
              bold=True)
-        text(s, x + Inches(0.25), TOP + Inches(1.6), pw - Inches(0.45), Inches(1.8), body, size=13,
+        text(s, x + Inches(0.2), y + Inches(0.72), pw - Inches(0.4), Inches(0.7), body, size=12,
              color=MUTED)
-    rect(s, MARGIN, Inches(5.35), CONTENT_W, Inches(1.1), fill=ACCENT_SOFT, line=None)
-    text(s, MARGIN + Inches(0.3), Inches(5.5), CONTENT_W - Inches(0.6), Inches(0.9),
-         "Honest note: it is a **planning agent**. It works out the best plan ahead of time inside "
-         "a simulator; it is not wired to real traffic lights or cameras.", size=14)
+    text(s, MARGIN, Inches(6.2), CONTENT_W, Inches(0.4),
+         "Environment: **fully observable, deterministic, static, discrete, single agent, known**. "
+         "That is why exact search can compute every score and prove the best plan.",
+         size=12.5, color=MUTED)
     notes(s, (
-        "PEAS is the standard way the textbook (Russell and Norvig) describes an AI agent. Our agent's "
-        "goal is the lowest score. Its world is the simulated road. Its only action is choosing the "
-        "offsets. What it 'sees' is the simulator's result for each plan. Say clearly that it plans "
-        "offline: it does not control real lights."
+        "People hear 'AI' and think of ChatGPT, which is machine learning. Foundations of AI starts "
+        "with problems you can describe exactly, solved by searching through possibilities in a smart "
+        "way. Our project is entirely classical AI. PEAS is the textbook's way to describe an agent: "
+        "its goal is the lowest score, its world is the simulated road, its only action is choosing "
+        "offsets, and what it 'sees' is the simulator's result. It plans offline; it does not control "
+        "real lights. The six environment words explain why exact search works here: real traffic "
+        "is random and partly hidden, our simulated road is not."
     ))
 
-    # 11. Environment properties
-    s = d.slide("Part 2 · AI in this course", "What kind of environment is it?",
-                lede="The textbook classifies environments. Ours is the easiest kind, which is why exact search works.")
-    props = [
-        ("Fully observable", "The agent knows everything: every car, every distance, every light."),
-        ("Deterministic", "The same plan always gives the same result. No randomness in scoring."),
-        ("Static", "Nothing changes while the agent is thinking."),
-        ("Discrete", "Offsets come in fixed 5 s steps, so there is a finite list of plans."),
-        ("Single agent", "One planner decides all the lights. No opponent."),
-        ("Known", "The rules of the road (the simulator) are fully written down."),
-    ]
-    pw = (CONTENT_W - 2 * Inches(0.25)) / 3
-    for i, (name, body) in enumerate(props):
-        x = MARGIN + (i % 3) * (pw + Inches(0.25))
-        y = TOP + Inches(0.15) + (i // 3) * Inches(1.95)
-        card(s, x, y, pw, Inches(1.75), name, body, body_size=13)
-    text(s, MARGIN, Inches(5.95), CONTENT_W, Inches(0.5),
-         "Because of these properties, a plan's score can be computed exactly, and a complete "
-         "search can prove a plan is the best one.", size=14, bold=True)
-    notes(s, (
-        "These six words come straight from the textbook's chapter on environments. Real traffic is "
-        "messier (partially observable, random), but our simulated road is fully observable, "
-        "deterministic, static, discrete and known. That simplification is what lets us use exact "
-        "search and claim 'proven best'. Slide 31 lists what we gave up."
-    ))
-
-    # ---------------------------------------------------------------- Part 3
-    s = d.divider("3", "FAI vocabulary",
-                  "The technical words you will hear, each paired with the plain word the website uses.")
-    notes(s, "Part 3 is a glossary. Keep it open during the viva; the right column is what the website says.")
-
-    # 13. CSP terms
-    s = d.slide("Part 3 · Vocabulary", "Constraint satisfaction problem (CSP) words",
+    # Vocabulary
+    s = d.slide("Vocabulary", "FAI words, and what the website calls them",
                 web="How it works › Words used on this site")
     rows = [
-        ("CSP", "A problem described as unknowns, their allowed values and rules", "“a puzzle with rules”"),
-        ("Variable", "One unknown to decide: the offset of Light 2, 3, 4, 5", "Offset (delay)"),
-        ("Domain", "Values a variable may take: {0, 5, 10, …, 55} s", "Timing step, 12 choices"),
-        ("Constraint", "A rule the values must obey: within ±10 s of a perfect green wave", "Green-wave rule"),
-        ("Assignment", "A value for some variables (partial) or for all (complete)", "Timing plan"),
-        ("Objective", "Number to minimise: J = waiting + 2 × stops", "Score (lower is better)"),
-        ("Optimal", "No other allowed plan has a lower score", "Best possible"),
-    ]
-    table(s, MARGIN, TOP + Inches(0.05), CONTENT_W, ["FAI term", "Meaning in this project", "Website word"],
-          rows, col_widths=[2.0, 6.4, 3.0], size=13, row_h=Inches(0.56), highlight_col=2)
-    notes(s, (
-        "A CSP, constraint satisfaction problem, is the main AI idea in the project. It has "
-        "variables (the offsets), domains (the 12 allowed values each) and constraints (the "
-        "green-wave rule). We add an objective, the score, so we are not just looking for ANY "
-        "allowed plan but the best one; textbooks call this a constraint optimisation problem. The "
-        "right column is the plain word used on the website's glossary."
-    ))
-
-    # 14. Search terms
-    s = d.slide("Part 3 · Vocabulary", "Search words",
-                web="How it works › How the optimized search works")
-    rows = [
-        ("Search tree", "Every way of choosing offsets light by light, drawn as a tree", "Tree of choices"),
-        ("Node", "One partial plan inside the tree", "Branch explored"),
-        ("Branching factor", "Children per node: 12 offsets, or 4 once the rule is applied", "Choices per light"),
-        ("Depth", "How many lights have been decided so far", "Light being timed"),
+        ("CSP", "Problem given as unknowns, their allowed values and rules", "“a puzzle with rules”"),
+        ("Variable", "One unknown: the offset of Light 2, 3, 4 or 5", "Offset (delay)"),
+        ("Domain", "Allowed values: {0, 5, 10, …, 55} s", "Timing step, 12 choices"),
+        ("Constraint", "Rule to obey: within ±10 s of a perfect green wave", "Green-wave rule"),
+        ("Objective", "Number to minimise: J = waiting + 2 × stops", "Score"),
         ("Backtracking", "Depth-first search that steps back to try the next value", "Backtracking"),
-        ("Complete", "Always finds a solution if one exists", "—"),
-        ("Exhaustive / brute force", "Score every single plan, one by one", "Checked by brute force"),
+        ("Forward checking", "Cross out the next light's values that break the rule", "Ruled out ahead"),
+        ("Branch and bound", "Skip branches that cannot beat the best plan so far", "Skipped by bound"),
+        ("Admissible bound", "Estimate that never over-estimates, so skipping is safe", "Safe but cautious"),
+        ("Complete / optimal", "Never misses a solution / returns the best one", "Best possible"),
+        ("Greedy", "Decide once with a rule of thumb, never reconsider", "Simple green wave"),
     ]
-    table(s, MARGIN, TOP + Inches(0.05), CONTENT_W, ["FAI term", "Meaning in this project", "Website word"],
-          rows, col_widths=[2.6, 6.0, 2.8], size=13, row_h=Inches(0.56), highlight_col=2)
+    table(s, MARGIN, TOP - Inches(0.1), CONTENT_W, ["FAI term", "Meaning in this project", "Website word"],
+          rows, col_widths=[2.4, 6.4, 2.6], size=12.5, row_h=Inches(0.42), highlight_col=2)
     notes(s, (
-        "Search means exploring possibilities in an organised way. Picture a tree: the root is an "
-        "empty plan, the first level picks Light 2's offset, the next level Light 3's, and so on. A "
-        "leaf is a complete plan. Backtracking walks this tree depth-first. Complete means it never "
-        "misses a solution; optimal means the answer it returns is the best."
+        "This one table is the vocabulary for the whole project. A CSP, constraint satisfaction "
+        "problem, has variables (the offsets), domains (12 allowed values each) and constraints "
+        "(the green-wave rule); we add an objective, the score, so we want the best allowed plan. "
+        "Backtracking walks the tree of choices, forward checking and branch and bound prune it. "
+        "The right column is the plain word the website uses, so you can find each idea there."
     ))
-
-    # 15. Pruning terms
-    s = d.slide("Part 3 · Vocabulary", "Pruning and strategy words",
-                web="Under the hood › How much searching it took")
-    rows = [
-        ("Pruning", "Skipping parts of the tree that cannot contain the answer", "Ruled out / skipped"),
-        ("Forward checking", "After fixing a light, cross out next light's values that break a rule", "Ruled out ahead"),
-        ("Dead end", "A light is left with no allowed value, so step back at once", "Dead ends"),
-        ("Branch and bound", "Remember the best plan so far; skip branches that cannot beat it", "Skipped by bound"),
-        ("Bound / heuristic", "Optimistic estimate of the cost still to come", "The estimate"),
-        ("Admissible", "The estimate never over-estimates, so pruning is always safe", "Safe but cautious"),
-        ("Greedy", "Make the locally best choice once, never reconsider", "Simple green wave"),
-        ("Baseline", "Simple reference strategy to compare against", "No coordination"),
-    ]
-    table(s, MARGIN, TOP + Inches(0.05), CONTENT_W, ["FAI term", "Meaning in this project", "Website word"],
-          rows, col_widths=[2.4, 6.4, 2.6], size=12.5, row_h=Inches(0.5), highlight_col=2)
-    notes(s, (
-        "Pruning is what makes search smart rather than brute force: whole branches of the tree are "
-        "cut off without being explored. Forward checking cuts values that break the rule. Branch "
-        "and bound cuts branches that cannot beat the best plan found so far, using an estimate "
-        "called a bound. If the estimate never over-estimates it is admissible, which guarantees we "
-        "never cut the true best plan."
-    ))
-
-    # ---------------------------------------------------------------- Part 4
-    s = d.divider("4", "How AI is built into the project",
-                  "From a road description to a proven-best timing plan, step by step.")
-    notes(s, "Part 4 follows one run of the website from input to answer.")
 
     # 17. Pipeline
-    s = d.slide("Part 4 · Integration", "The pipeline: what happens when you press the button",
+    s = d.slide("How it works", "The pipeline: what happens when you press the button",
                 web="Try it › Find the best timings")
     steps_ = [
         ("1  Describe", "Lights, distance, speed, traffic", "config.py"),
@@ -725,7 +550,7 @@ def build() -> Presentation:
     ))
 
     # 18. Our CSP
-    s = d.slide("Part 4 · Integration", "Our problem written as a CSP",
+    s = d.slide("How it works", "Our problem written as a CSP",
                 web="How it works › How the optimized search works")
     rows = [
         ("Variables", "O₂, O₃, O₄, O₅  (Light 1: O₁ = 0)", "Offsets of Lights 2 to 5"),
@@ -741,9 +566,11 @@ def build() -> Presentation:
         "amount changes nothing.",
         "Fixing O₁ = 0 removes those duplicates, so the search space is 12 times smaller.",
     ], body_size=13)
-    text(s, MARGIN, Inches(5.95), CONTENT_W, Inches(0.5),
-         "W = total seconds all cars wait at red lights.  S = total number of stops.  "
-         "The rule can be switched off on the website (set it to 0).", size=12, color=MUTED)
+    text(s, MARGIN, Inches(5.6), CONTENT_W, Inches(0.8), [
+        "W = total seconds all cars wait at red lights, S = total stops. A stop costs 2 extra "
+        "seconds because braking and pulling away waste time and fuel.",
+        "Worked out: no coordination 3,460 + 2 × 160 = **3,780**;  optimized 540 + 2 × 39 = **618**.",
+    ], size=12.5, color=MUTED, spacing=4)
     notes(s, (
         "This is the formal CSP. Four variables, twelve values each, one rule per pair of "
         "neighbouring lights, and an objective. The rule says each light's offset should be close "
@@ -752,42 +579,8 @@ def build() -> Presentation:
         "20,736."
     ))
 
-    # 19. Score & simulator
-    s = d.slide("Part 4 · Integration", "How a plan is scored (the simulator)",
-                web="How it works › How a plan is scored")
-    rules = [
-        ("Create the traffic", "40 cars enter in a bunch, 1 s apart. Same cars for every plan."),
-        ("Arrive at a light", "Green when it arrives? It drives straight through."),
-        ("Wait at red", "Red? It waits for green. The wait is added and counts as one stop."),
-        ("Drive on", "36 s to the next light, always at the speed limit."),
-        ("Add it up", "Sum waiting and stops over every car and every light."),
-    ]
-    for i, (name, body) in enumerate(rules):
-        y = TOP + Inches(0.05) + i * Inches(0.8)
-        circle = rect(s, MARGIN, y, Inches(0.5), Inches(0.5), fill=ACCENT, line=None, shape=MSO_SHAPE.OVAL)
-        fill_text(circle, str(i + 1), size=14, color=SURFACE, bold=True, margin=0)
-        text(s, MARGIN + Inches(0.7), y - Inches(0.02), Inches(6.4), Inches(0.3), name, size=15, bold=True)
-        text(s, MARGIN + Inches(0.7), y + Inches(0.3), Inches(6.4), Inches(0.4), body, size=12.5, color=MUTED)
-    rect(s, Inches(8.0), TOP + Inches(0.05), Inches(4.73), Inches(3.95))
-    text(s, Inches(8.3), TOP + Inches(0.25), Inches(4.2), Inches(0.4), "The score, worked out", size=16, bold=True)
-    text(s, Inches(8.3), TOP + Inches(0.8), Inches(4.2), Inches(3.0), [
-        "**Score = waiting + 2 × stops**",
-        "No coordination:  3,460 + 2 × 160 = **3,780**",
-        "Optimized plan:  540 + 2 × 39 = **618**",
-        "A stop costs 2 extra seconds because braking and pulling away waste time and fuel even "
-        "when the wait is short.",
-    ], size=13, color=MUTED, spacing=10)
-    text(s, MARGIN, Inches(6.05), CONTENT_W, Inches(0.4),
-         "Simplified on purpose: no queues, constant speed, one road. See slide 31.", size=12, color=MUTED)
-    notes(s, (
-        "The simulator is the environment model, the 'rules of the world' the agent uses to judge a "
-        "plan. It follows these five rules. The score combines total waiting and total stops. "
-        "Checking the arithmetic: uncoordinated cars wait 3,460 seconds in total with 160 stops, "
-        "giving 3,780. The optimized plan has 540 seconds and 39 stops, giving 618."
-    ))
-
     # 20. Baselines
-    s = d.slide("Part 4 · Integration", "Strategies 1 and 2: the comparisons",
+    s = d.slide("How it works", "Strategies 1 and 2: the comparisons",
                 web="How it works › Three strategies")
     card(s, MARGIN, TOP + Inches(0.05), Inches(5.85), Inches(3.95), "No coordination", [
         "Every offset is 0, so every light turns green together.",
@@ -812,7 +605,7 @@ def build() -> Presentation:
     ))
 
     # 21. Backtracking tree
-    s = d.slide("Part 4 · Integration", "Strategy 3, step 1: backtracking search",
+    s = d.slide("How it works", "Strategy 3, step 1: backtracking search",
                 web="Under the hood › The search, step by step")
     root_x = Inches(3.6)
     root = rect(s, root_x, TOP + Inches(0.05), Inches(1.4), Inches(0.5), fill=SUNKEN, line=LINE)
@@ -851,7 +644,7 @@ def build() -> Presentation:
     ))
 
     # 22. Forward checking
-    s = d.slide("Part 4 · Integration", "Step 2: forward checking crosses out bad values early",
+    s = d.slide("How it works", "Step 2: forward checking crosses out bad values early",
                 web="How it works › Forward checking")
     text(s, MARGIN, TOP + Inches(0.05), Inches(7.4), Inches(0.6),
          "Example: Light 2 = 40 s. A perfect wave would start Light 3 at 40 + 36 = 76 → 16 s. "
@@ -887,100 +680,65 @@ def build() -> Presentation:
         "pruning, and the website prints the count for your road."
     ))
 
-    # 23. Branch and bound + verification
-    s = d.slide("Part 4 · Integration", "Step 3: branch and bound, and an honest zero",
-                web="Under the hood › Skipped by bound")
-    card(s, MARGIN, TOP + Inches(0.05), Inches(5.85), Inches(3.0), "How branch and bound works", [
-        "Keep the **best score found so far** (the incumbent).",
-        "For a partial plan, estimate the lowest score it could still reach (the **bound**).",
-        "If even that estimate cannot beat the incumbent, skip the whole branch.",
-    ], body_size=14)
-    card(s, MARGIN + Inches(6.28), TOP + Inches(0.05), Inches(5.85), Inches(3.0), "Our bound: safe but cautious", [
-        "We estimate “the rest of the road adds no cost”: **h(s) = 0**.",
-        "It never over-estimates, so it is **admissible**: it can never cut the true best plan.",
-        "But it is so cautious it never skips anything: **0 skips** in every run.",
-    ], tag="Honest result", tag_tone="warn", body_size=14)
-    rect(s, MARGIN, Inches(4.95), CONTENT_W, Inches(1.5), fill=ACCENT_SOFT, line=None)
-    text(s, MARGIN + Inches(0.3), Inches(5.1), CONTENT_W - Inches(0.6), Inches(1.3), [
-        "The website reports the true count (0) instead of hiding it. The real speed-up comes from "
-        "forward checking.",
-        "A sharper bound that still never over-estimates is listed as future work.",
-    ], size=14, spacing=6)
-    notes(s, (
-        "Branch and bound is implemented and counted, but with the bound h = 0 it never prunes. "
-        "That is correct (an admissible bound keeps the answer optimal) but weak. We report the "
-        "zero honestly; expect a viva question on it. Answer: h = 0 is admissible and consistent, "
-        "so correctness holds, but a lower bound of 0 can never beat a real incumbent, so nothing "
-        "is skipped. A better bound is future work."
-    ))
-
-    # 24. Verification
-    s = d.slide("Part 4 · Integration", "Is it really the best? Double-checking the answer",
+    # Branch and bound + verification
+    s = d.slide("How it works", "Step 3: branch and bound, and checking the answer",
                 web="Under the hood › Was the answer double-checked?")
-    picture(s, "docs/screenshots/11_hood_check.png", MARGIN, TOP, h=Inches(4.4),
-            crop=(0.14, 0.25, 0.14, 0.02))
-    card(s, Inches(7.55), TOP, Inches(5.18), Inches(4.4), "Two kinds of proof", [
-        "**Proven by the search**: the search finished, so every allowed plan was scored or "
-        "safely ruled out.",
-        "**Checked by brute force**: a separate, deliberately simple program scores every allowed "
-        "plan one by one and must agree.",
-        "Default road: brute force over **256 plans** gives the same best score, **618**.",
-        "If the search hits its 30 s limit, the website says “best found in time (not proven best)”.",
-    ], body_size=13.5)
+    card(s, MARGIN, TOP + Inches(0.05), Inches(5.85), Inches(3.3), "Branch and bound: an honest zero", [
+        "Keep the **best score so far**; skip a branch if an optimistic estimate (the **bound**) "
+        "says it cannot beat it.",
+        "Our estimate is “the rest of the road adds no cost”: **h = 0**. It never over-estimates, "
+        "so it is **admissible** and safe.",
+        "But it is so cautious it never skips anything: **0 skips**. The website shows the true 0.",
+    ], tag="Honest result", tag_tone="warn", body_size=13.5)
+    card(s, MARGIN + Inches(6.28), TOP + Inches(0.05), Inches(5.85), Inches(3.3), "Is it really the best?", [
+        "**Proven by the search**: it finished, so every allowed plan was scored or safely ruled out.",
+        "**Checked by brute force**: a separate, simple program scores every allowed plan and must agree.",
+        "If the 30 s limit is hit, the website says “best found in time (not proven best)”.",
+    ], tag="Two kinds of proof", tag_tone="green", body_size=13.5)
+    rect(s, MARGIN, Inches(5.3), CONTENT_W, Inches(1.1), fill=GREEN_SOFT, line=None)
+    text(s, MARGIN + Inches(0.3), Inches(5.3), CONTENT_W - Inches(0.6), Inches(1.1),
+         "**Yes, confirmed.** Brute force over all 256 allowed plans gives the same best score, 618. "
+         "In the benchmarks it agreed on 12 of 14 roads; the 2 too large to check are reported as skipped.",
+         size=14, anchor=MSO_ANCHOR.MIDDLE)
     notes(s, (
-        "We never just claim the answer is the best. The search itself proves it when it finishes, "
-        "and an independently written brute-force verifier double-checks it whenever the number of "
-        "plans is small enough (up to 250,000). In the benchmarks it agreed on 12 of 14 roads; the "
-        "other 2 were too large and are reported as skipped, not as verified."
+        "Branch and bound is implemented and counted, but with the bound h = 0 it never prunes. That "
+        "is correct (an admissible bound keeps the answer optimal) but weak, and we report the zero "
+        "honestly; a sharper bound is future work. We never just claim the answer is the best: the "
+        "finished search proves it, and an independently written brute-force verifier double-checks "
+        "it whenever there are at most 250,000 plans."
     ))
 
-    # ---------------------------------------------------------------- Part 5
-    s = d.divider("5", "Results", "What the AI achieved, on the default road and across test roads.")
-    notes(s, "Part 5 shows the results with screenshots from the live website.")
-
-    # 26. Try it result
-    s = d.slide("Part 5 · Results", "The default road: 84% less waiting",
-                web="Try it › headline and stats")
-    picture(s, "docs/screenshots/01_try_it_form.png", MARGIN, TOP, w=Inches(6.85),
-            crop=(0.41, 0.25, 0.14, 0.37))
+    # Default road result
+    s = d.slide("Results", "The default road: 84% less waiting",
+                web="Try it › See the difference")
+    picture(s, "docs/screenshots/03_try_it_time_space.png", MARGIN, TOP + Inches(0.05), w=Inches(6.9),
+            crop=(0.14, 0.14, 0.14, 0.375))
+    text(s, MARGIN, TOP + Inches(3.25), Inches(6.9), Inches(1.2), [
+        "Each band is a bunch of cars (**blue** up the road, **orange** down). A **flat** stretch on "
+        "a red bar means cars waiting. Left, no coordination: flat steps at almost every light. "
+        "Right, optimized: both bands slide through.",
+    ], size=12, color=MUTED)
     rows = [
         ("Waiting per car", "86.5 s", "13.5 s", "−84%"),
         ("Stops per car", "4.00", "0.97", "−76%"),
         ("Score", "3,780", "618", "−84%"),
     ]
-    table(s, Inches(7.75), TOP, Inches(4.98), ["", "None", "Optimized", "Change"], rows,
+    table(s, Inches(7.75), TOP + Inches(0.05), Inches(4.98), ["", "None", "Optimized", "Change"], rows,
           col_widths=[2.2, 1.3, 1.6, 1.3], size=13, row_h=Inches(0.55), highlight_col=2)
-    text(s, Inches(7.75), TOP + Inches(2.55), Inches(4.98), Inches(2.0), [
-        "Badge: **Proven best plan for this road.**",
-        "Try changing the road on the website: 7 lights, heavy traffic, one way. The headline "
-        "updates and the search re-runs in seconds.",
+    text(s, Inches(7.75), TOP + Inches(2.5), Inches(4.98), Inches(2.0), [
+        "Plan: **0, +40, +10, +40, +15 s**. Badge: **Proven best plan for this road.**",
+        "The search scored 256 of 20,736 plans in about 0.02 s.",
+        "Try it live: 7 lights, heavy traffic, one way, and press Find the best timings.",
     ], size=13, color=MUTED, spacing=8)
     notes(s, (
         "This is the Try it page on the default road. An average car now waits 13.5 s instead of "
-        "86.5 s and stops about once instead of four times. The green badge means the search "
-        "finished and proved the plan is the best under the rules."
-    ))
-
-    # 27. Time-space
-    s = d.slide("Part 5 · Results", "Seeing the difference: time-space diagrams",
-                web="Try it › See the difference")
-    picture(s, "docs/screenshots/03_try_it_time_space.png", MARGIN, TOP + Inches(0.4), w=Inches(6.9),
-            crop=(0.14, 0.14, 0.14, 0.375))
-    card(s, Inches(7.75), TOP, Inches(4.98), Inches(4.55), "How to read it", [
-        "Time runs left to right; the road runs from Light 1 (bottom) to Light 5 (top).",
-        "Each band is a bunch of cars. **Blue** drives up, **orange** drives down.",
-        "A **flat** stretch on a red bar = cars waiting at a red light.",
-        "Left: flat steps at almost every light. Right: both bands slide through.",
-    ], body_size=13.5)
-    notes(s, (
-        "Time-space diagrams are the traffic engineer's standard picture. A straight slope means "
-        "cars are moving; a flat segment means they are stopped. Without coordination both bunches "
-        "stop at nearly every light. With the optimized plan both directions pass almost without "
-        "stopping."
+        "86.5 s and stops about once instead of four times. The time-space diagrams are the traffic "
+        "engineer's standard picture: a slope means moving, a flat segment means stopped. The green "
+        "badge means the search finished and proved the plan is the best under the rules."
     ))
 
     # 28. Experiments
-    s = d.slide("Part 5 · Results", "Across five test roads, the search always wins or ties",
+    s = d.slide("Results", "Across five test roads, the search always wins or ties",
                 web="Experiments › Five test roads")
     rows = [
         ("A", "3 lights, light traffic", "762", "140", "140", "−82%", "Brute force"),
@@ -1007,103 +765,39 @@ def build() -> Presentation:
         "lets you run a live comparison."
     ))
 
-    # 29. Search effort
-    s = d.slide("Part 5 · Results", "How much searching it took",
-                web="Under the hood › How much searching it took")
-    picture(s, "docs/screenshots/12_hood_effort.png", MARGIN, TOP + Inches(0.3), w=Inches(6.9),
-            crop=(0.14, 0.06, 0.14, 0.41))
-    card(s, Inches(7.75), TOP, Inches(4.98), Inches(4.55), "Default road, in numbers", [
-        "**20,736** possible plans; only **256** scored (1.2%).",
-        "**341** values tried, **85** partial plans extended.",
-        "**680** values ruled out ahead by forward checking.",
-        "**0** skipped by bound, **0** dead ends.",
-        "Search time: about **0.02 s**.",
-        "Bigger roads: road E scored 194,481 plans in about 12 s.",
-    ], body_size=13.5)
-    notes(s, (
-        "Every counter on the Under the hood page maps to a vocabulary word from Part 3: values "
-        "tried = assignments attempted, branches explored = nodes expanded, ruled out ahead = "
-        "forward-checking eliminations, skipped by bound = branch-and-bound prunes."
-    ))
-
-    # ---------------------------------------------------------------- Part 6
-    s = d.divider("6", "Limits and recap", "What the model leaves out, and the whole project in one minute.")
-    notes(s, "Part 6 closes with honest limitations and a summary you can say out loud.")
-
-    # 31. Limitations
-    s = d.slide("Part 6 · Limits", "What the model simplifies (said honestly)")
-    lims = [
-        ("No queues", "Cars never pile up behind each other; heavy traffic is gentler than in reality."),
-        ("Constant speed", "Every car drives exactly at the speed limit, no braking or accelerating."),
-        ("One road, one phase", "No turning cars, pedestrians or side streets."),
-        ("Synthetic traffic", "Cars are generated, not measured from a real road."),
-        ("Weak bound", "h = 0 never prunes; a sharper admissible bound is future work."),
-        ("Big roads", "7+ lights need the green-wave rule to stay fast; proof is within that rule."),
-    ]
-    pw = (CONTENT_W - 2 * Inches(0.25)) / 3
-    for i, (name, body) in enumerate(lims):
-        x = MARGIN + (i % 3) * (pw + Inches(0.25))
-        y = TOP + Inches(0.05) + (i // 3) * Inches(1.9)
-        card(s, x, y, pw, Inches(1.7), name, body, body_size=13)
-    text(s, MARGIN, Inches(5.85), CONTENT_W, Inches(0.6),
-         "Future work: a sharper bound · queues in the simulator · local search for very large "
-         "roads · turning phases · testing on a real road layout.", size=13, color=MUTED)
-    notes(s, (
-        "Say these before you are asked. The numbers are simulated under simplifications, so they "
-        "compare plans fairly but are not field predictions. The project is a demonstration of "
-        "classical AI search, not a traffic-engineering tool."
-    ))
-
-    # 32. Recap
-    s = d.slide("Part 6 · Recap", "The whole project in one minute")
+    # Limits and recap
+    s = d.slide("Wrap-up", "Limits, and the whole project in one minute")
+    card(s, MARGIN, TOP + Inches(0.05), Inches(4.4), Inches(4.45), "What the model simplifies", [
+        "No queues: cars never pile up.",
+        "Constant speed, no braking.",
+        "One road: no turns or pedestrians.",
+        "Generated traffic, not measured.",
+        "Weak bound: h = 0 never prunes.",
+        "Future: sharper bound, queues, real road layout.",
+    ], tag="Said honestly", tag_tone="grey", body_size=13)
     recap = [
-        ("Problem", "Uncoordinated traffic lights make cars stop at almost every light: 86.5 s "
-                    "waiting and 4 stops per car on our default road."),
-        ("AI technique", "Model the offsets as a constraint satisfaction problem and solve it with "
-                         "backtracking, forward checking and branch and bound."),
-        ("Integration", "One deterministic simulator scores every plan; a brute-force verifier "
-                        "double-checks the answer; a four-page website explains it all."),
-        ("Result", "13.5 s waiting and 0.97 stops per car (−84%); 80–88% lower scores on every "
-                   "test road; optimality proven or brute-force checked."),
+        ("Problem", "Uncoordinated lights: 86.5 s waiting and 4 stops per car on the default road."),
+        ("AI technique", "Offsets as a CSP, solved by backtracking, forward checking and branch and bound."),
+        ("Integration", "One simulator scores every plan; brute force double-checks; the website explains it."),
+        ("Result", "13.5 s and 0.97 stops per car (−84%); 80–88% lower on every test road, proven best."),
     ]
+    rx = MARGIN + Inches(4.65)
+    rw = CONTENT_W - Inches(4.65)
     for i, (name, body) in enumerate(recap):
-        y = TOP + Inches(0.05) + i * Inches(1.08)
-        rect(s, MARGIN, y, CONTENT_W, Inches(0.95))
-        text(s, MARGIN + Inches(0.3), y, Inches(2.2), Inches(0.95), name, size=17, bold=True,
+        y = TOP + Inches(0.05) + i * Inches(1.14)
+        rect(s, rx, y, rw, Inches(1.0))
+        text(s, rx + Inches(0.25), y, Inches(1.7), Inches(1.0), name, size=15, bold=True,
              color=ACCENT, anchor=MSO_ANCHOR.MIDDLE)
-        text(s, MARGIN + Inches(2.6), y, CONTENT_W - Inches(2.9), Inches(0.95), body, size=14,
+        text(s, rx + Inches(2.0), y, rw - Inches(2.2), Inches(1.0), body, size=13,
              anchor=MSO_ANCHOR.MIDDLE)
     notes(s, (
-        "If you only remember one slide, remember this one. Problem: wasted waiting at "
-        "uncoordinated lights. Technique: a CSP solved by backtracking with forward checking and "
-        "branch and bound. Integration: a shared simulator, an independent verifier and the "
-        "website. Result: 84% less waiting on the default road, proven optimal."
+        "Say the limitations before you are asked: the numbers are simulated under simplifications, "
+        "so they compare plans fairly but are not field predictions. Then the one-minute summary. "
+        "Likely viva questions: Where is the AI? (the CSP search). Why not try every plan? (it grows "
+        "x12 per light; pruning keeps it to 256). How do you know it is the best? (complete search, "
+        "brute force agrees). Why does branch and bound prune 0? (h = 0 is admissible but weak). Why "
+        "not machine learning? (rules are known, no data). More in docs/viva_questions.md."
     ))
-
-    # 33. Viva prep
-    s = d.slide("Part 6 · Recap", "Questions you will probably be asked")
-    qa = [
-        ("Where is the AI?", "The CSP search that picks the offsets: backtracking + forward "
-                             "checking + branch and bound."),
-        ("Why not try every plan?", "It grows ×12 per light (3 million at 7 lights). Pruning keeps "
-                                    "it to 256 plans on the default road."),
-        ("How do you know it is the best?", "The search is complete, and brute force agrees "
-                                            "wherever the space is small enough."),
-        ("Why does branch and bound prune 0?", "Our bound h = 0 is admissible but weak; we report "
-                                               "the true count."),
-        ("Why not machine learning?", "The rules are known exactly and there is no data; search "
-                                      "gives a proven-best answer."),
-        ("Is it realistic?", "It is a simplified simulator: fair for comparing plans, not a field "
-                             "prediction."),
-    ]
-    pw = (CONTENT_W - Inches(0.25)) / 2
-    for i, (q, a) in enumerate(qa):
-        x = MARGIN + (i % 2) * (pw + Inches(0.25))
-        y = TOP + Inches(0.05) + (i // 2) * Inches(1.45)
-        card(s, x, y, pw, Inches(1.3), q, a, title_size=15, body_size=13)
-    text(s, MARGIN, Inches(6.25), CONTENT_W, Inches(0.3),
-         "More answers: docs/viva_questions.md (42 questions).", size=12, color=MUTED)
-    notes(s, "Short answers to the most likely viva questions. The full list is in docs/viva_questions.md.")
 
     return d.prs
 

@@ -18,6 +18,7 @@ from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import cm
+from reportlab.lib.utils import ImageReader
 from reportlab.platypus import (
     Image,
     KeepTogether,
@@ -37,8 +38,11 @@ from report_content import BLOCKS  # noqa: E402
 OUT = REPO / "deliverables"
 OUT.mkdir(exist_ok=True)
 
-ACCENT = colors.HexColor("#1F4E79")
-RULE = colors.HexColor("#B8CCE4")
+# Same tokens as the dashboard (visualization/__init__.py).
+ACCENT = colors.HexColor("#2457d6")
+RULE = colors.HexColor("#e2e2dc")
+BAND = colors.HexColor("#f6f6f2")
+TEXT = colors.HexColor("#17191c")
 
 CHAR_FALLBACKS = {
     "≤": "<=", "≥": ">=", "≈": "~", "→": "->", "−": "-", "–": "-", "—": "-",
@@ -81,7 +85,7 @@ def build_styles() -> dict[str, ParagraphStyle]:
     return {
         "title": ParagraphStyle(
             "title", parent=base["Title"], fontSize=20, leading=24,
-            alignment=TA_CENTER, spaceAfter=6, textColor=ACCENT,
+            alignment=TA_CENTER, spaceAfter=6, textColor=TEXT,
         ),
         "subtitle": ParagraphStyle(
             "subtitle", parent=base["Normal"], fontSize=11, leading=15,
@@ -89,7 +93,7 @@ def build_styles() -> dict[str, ParagraphStyle]:
         ),
         "h1": ParagraphStyle(
             "h1", parent=base["Heading1"], fontSize=14, leading=18,
-            spaceBefore=14, spaceAfter=6, textColor=ACCENT,
+            spaceBefore=14, spaceAfter=6, textColor=TEXT,
         ),
         "h2": ParagraphStyle(
             "h2", parent=base["Heading2"], fontSize=11.5, leading=15,
@@ -125,7 +129,7 @@ def build_styles() -> dict[str, ParagraphStyle]:
         ),
         "code": ParagraphStyle(
             "code", parent=base["BodyText"], fontName="Courier", fontSize=8,
-            leading=11, backColor=colors.HexColor("#F2F5F9"),
+            leading=11, backColor=BAND,
             borderPadding=4, leftIndent=8, spaceAfter=3,
         ),
     }
@@ -147,7 +151,7 @@ def make_table(caption: str, headers: list[str], rows: list[list[str]], styles) 
     table = Table(data, colWidths=col_widths, repeatRows=1)
     table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), ACCENT),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#EDF2F8")]),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, BAND]),
         ("GRID", (0, 0), (-1, -1), 0.4, RULE),
         ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ("LEFTPADDING", (0, 0), (-1, -1), 4),
@@ -192,8 +196,9 @@ def flowables(blocks, styles) -> list:
             image_path = REPO / block[1]
             if not image_path.exists():
                 raise FileNotFoundError(f"missing figure: {image_path}")
-            image = Image(str(image_path), width=15.5 * cm, height=8.2 * cm)
-            image._restrictSize(15.5 * cm, 8.6 * cm)
+            pixel_w, pixel_h = ImageReader(str(image_path)).getSize()
+            scale = min(15.5 * cm / pixel_w, 9.6 * cm / pixel_h)
+            image = Image(str(image_path), width=pixel_w * scale, height=pixel_h * scale)
             flows.append(KeepTogether([image, Paragraph(esc(block[2]), styles["caption"])]))
         else:  # pragma: no cover
             raise ValueError(f"unknown block kind: {kind}")

@@ -15,7 +15,7 @@ from pathlib import Path
 from docx import Document
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.shared import Inches, Pt
+from docx.shared import Inches, Pt, RGBColor
 
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -23,6 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from report_content import BLOCKS, REPORT_SUBTITLE, REPORT_TITLE  # noqa: E402
 
 OUT = REPO / "deliverables"
+ACCENT = RGBColor(0x24, 0x57, 0xD6)
 OUT.mkdir(exist_ok=True)
 
 
@@ -95,6 +96,13 @@ def main() -> None:
     style = document.styles["Normal"]
     style.font.name = "Calibri"
     style.font.size = Pt(10.5)
+    # Same tokens as the dashboard (visualization/__init__.py).
+    style.font.color.rgb = RGBColor(0x17, 0x19, 0x1C)
+    for name, size in (("Heading 1", 15), ("Heading 2", 12)):
+        heading = document.styles[name]
+        heading.font.name = "Calibri"
+        heading.font.size = Pt(size)
+        heading.font.color.rgb = RGBColor(0x17, 0x19, 0x1C) if name == "Heading 1" else ACCENT
     for section in document.sections:
         section.left_margin = Inches(0.9)
         section.right_margin = Inches(0.9)

@@ -41,8 +41,8 @@ never seen the project can follow them:
 | **Experiments** | Saved benchmark roads A–E, plus a live sweep that varies one factor of your road (traffic, speed, number of lights, distance). |
 | **Under the hood** | The brute-force check of the optimum, every search counter with its meaning, the recorded search steps, downloads and the full settings. |
 
-The screenshots in `docs/screenshots/` show the earlier nine-tab dashboard used
-in the submitted report and slides.
+The 13 screenshots in `docs/screenshots/` show these four pages on the default
+road; they are used in the report and the slides.
 
 ## Quickstart
 
@@ -99,7 +99,8 @@ the implemented bound `h(s) = 0` is admissible but weak.
   semantics, algorithm detail, verification, data flow, dashboard design.
 - [`docs/viva_questions.md`](docs/viva_questions.md) — 42 viva questions with
   answers grounded in measured results.
-- [`docs/screenshots/`](docs/screenshots/) — 15 screenshots of the earlier nine-tab dashboard.
+- [`docs/screenshots/`](docs/screenshots/) — 13 screenshots of the four-page dashboard
+  (recapture with `tools/capture_screenshots.py`).
 - [`CHANGELOG.md`](CHANGELOG.md) · [`CITATION.cff`](CITATION.cff) ·
   [`CONTRIBUTING.md`](CONTRIBUTING.md)
 

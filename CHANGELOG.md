@@ -14,6 +14,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   plain language using one vocabulary.
 - Search-trace charts and event table use plain-language event names.
 - Minimum Streamlit version raised to 1.50 for the theming APIs.
+- Slides rewritten as a 33-slide read-along deck for readers new to AI: the problem, what
+  classical AI is, FAI vocabulary mapped to the dashboard's words, how the CSP search is
+  built into the project, results and limits. Every slide names the dashboard page and
+  section to open alongside it; colours follow the dashboard tokens. Speaker notes are
+  now generated from the deck.
+- Report describes the four-page dashboard, adds eleven live screenshots and a table
+  mapping dashboard words to AI terms; DOCX/PDF use the dashboard palette and the PDF keeps
+  figure aspect ratios.
+- Screenshots recaptured from the four-page dashboard (13 views).
 
 ### Fixed
 - Invalid-scenario message no longer repeats "Invalid scenario configuration".
